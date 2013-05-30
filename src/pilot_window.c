@@ -33,8 +33,9 @@ pilot_window_create(struct pilot_widget *widget, char *name, uint32_t width, uin
 	//window->theme = pilot_theme_create(display);
 	if (window->theme)
 		pilot_theme_resize_window(window->theme, &width, &height);
+	window->common.width = width;
+	window->common.height = height;
 
-	pilot_widget_resize(&window->common, width, height);
 	window->common.action.redraw = _pilot_window_redraw;
 	window->common.action.resize = _pilot_window_resize;
 	window->common.action.destroy = _pilot_window_destroy;
@@ -128,6 +129,14 @@ pilot_window_layout(struct pilot_window *window)
 }
 
 int
+pilot_window_resize(struct pilot_window *window, uint32_t width, uint32_t height)
+{
+	window->common.width = width;
+	window->common.height = height;
+	return 0;
+}
+
+int
 pilot_window_fullscreen(struct pilot_window *window)
 {
 	return 0;
@@ -159,8 +168,8 @@ _pilot_window_resize(void *widget, uint32_t width, uint32_t height)
 	window->fullheight = height;
 	if (window->theme)
 		pilot_theme_resize_window(window->theme, &width, &height);
-	if (window->layout)
-		pilot_widget_resize(window->layout, width, height);
+	if (window->layout && window->layout->action.resize)
+		window->layout->action.resize(window->layout, width, height);
 
 	window->common.width = width;
 	window->common.height = height;

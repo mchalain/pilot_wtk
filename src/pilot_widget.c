@@ -39,14 +39,6 @@ pilot_widget_init(struct pilot_widget *widget, struct pilot_widget *parent)
 }
 
 int
-pilot_widget_resize(struct pilot_widget *widget, uint32_t width, uint32_t height)
-{
-	widget->width = width;
-	widget->height = height;
-	return 0;
-}
-
-int
 pilot_widget_size(struct pilot_widget *widget, uint32_t *width, uint32_t *height)
 {
 	*width = widget->width;

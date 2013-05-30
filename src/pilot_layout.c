@@ -3,12 +3,20 @@
 #include <string.h>
 #include <pilot_wtk.h>
 
+static char _pilot_layout_columns[] =
+{
+	1, 1, 1, 2, 2, 2, 2, 3, 3, 3
+};
+static char _pilot_layout_lines[] =
+{
+	1, 1, 2, 2, 2, 3, 3, 3, 3, 3
+};
 static void
 _pilot_layout_destroy(void *widget);
 static int
 _pilot_layout_redraw(void *widget);
 static int
-_pilot_layout_resize(void *widget, uint32_t width, uint32_t height);
+_pilot_layout_resize(void *widget, pilot_length_t width, pilot_length_t height);
 
 struct pilot_layout *
 pilot_layout_create(struct pilot_widget *parent)
@@ -19,10 +27,12 @@ pilot_layout_create(struct pilot_widget *parent)
 	layout = malloc(sizeof *layout);
 	memset(layout, 0, sizeof(*layout));
 	pilot_widget_init(&layout->common, parent);
-	pilot_widget_resize(&layout->common, parent->width, parent->height);
+	layout->common.width = parent->width;
+	layout->common.height = parent->height;
 	layout->common.action.redraw = _pilot_layout_redraw;
 	layout->common.action.resize = _pilot_layout_resize;
 	layout->common.action.destroy = _pilot_layout_destroy;
+	layout->maxwidgets = MAXWIDGETS;
 
 	return layout;
 }
@@ -55,7 +65,11 @@ pilot_layout_add_widget(struct pilot_layout *layout, struct pilot_widget *widget
 	for (i = 0; i < layout->maxwidgets; i++)
 		if (!layout->widgets[i]) break;
 	if (i < layout->maxwidgets)
-		layout->widgets[i] = widget;
+	{
+		if (widget)
+			layout->widgets[i] = widget;
+		layout->nbwidgets++;
+	}
 	else
 		return -1;
 	return 0;
@@ -67,24 +81,33 @@ _pilot_layout_redraw(void *widget)
 	struct pilot_layout *layout = widget;
 	int i;
 	
-	for (i = 0; i < layout->maxwidgets; i++) {
+	for (i = 0; i < layout->nbwidgets; i++) {
 		struct pilot_widget *widget = layout->widgets[i];
-		if (!widget) break;
+		if (!widget) continue;
 		pilot_widget_redraw(widget);
 	}
 	return 0;
 }
 
 static int
-_pilot_layout_resize(void *widget, uint32_t width, uint32_t height)
+_pilot_layout_resize(void *widget, pilot_length_t width, pilot_length_t height)
 {
 	struct pilot_layout *layout = widget;
 	int i;
+	pilot_length_t widget_width = 0, widget_height = 0;
 	
-	for (i = 0; i < layout->maxwidgets; i++) {
+	for (i = 0; i < layout->nbwidgets; i++) {
 		struct pilot_widget *widget = layout->widgets[i];
-		if (!widget) break;
-		pilot_widget_resize(widget, width, height);
+		widget_width += width / _pilot_layout_columns[layout->nbwidgets];
+		widget_height += height / _pilot_layout_lines[layout->nbwidgets];
+		if (!widget) {
+			widget_height = 0;
+			if ( i % _pilot_layout_columns[layout->nbwidgets] == _pilot_layout_columns[layout->nbwidgets])
+				widget_width = 0;
+			continue;
+		}
+		widget->action.resize(widget, widget_width, widget_height);
+		widget_width = 0, widget_height = 0;
 	}
 	return 0;
 }

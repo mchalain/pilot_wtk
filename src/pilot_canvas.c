@@ -23,7 +23,8 @@ pilot_canvas_create(struct pilot_widget *parent, int format)
 	canvas = malloc(sizeof *canvas);
 	memset(canvas, 0, sizeof(*canvas));
 	pilot_widget_init(&canvas->common, parent);
-	pilot_widget_resize(&canvas->common, parent->width, parent->height);
+	canvas->common.width = parent->width;
+	canvas->common.height = parent->height;
 	canvas->common.action.redraw = _pilot_canvas_redraw;
 	canvas->common.action.resize = _pilot_canvas_resize;
 	canvas->common.action.destroy = _pilot_canvas_destroy;

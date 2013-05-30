@@ -154,6 +154,7 @@ struct pilot_buffer {
 struct pilot_layout {
 	struct pilot_widget common;
 	int32_t maxwidgets;
+	int32_t nbwidgets;
 	struct pilot_widget *widgets[MAXWIDGETS];
 };
 
@@ -202,8 +203,6 @@ pilot_widget_init(struct pilot_widget *widget, struct pilot_widget *parent);
 int
 pilot_widget_redraw(struct pilot_widget *widget);
 int
-pilot_widget_resize(struct pilot_widget *widget, pilot_length_t width, pilot_length_t height);
-int
 pilot_widget_size(struct pilot_widget *widget, pilot_length_t *width, pilot_length_t *height);
 struct pilot_display *
 pilot_widget_display(struct pilot_widget *widget);
@@ -246,6 +245,8 @@ int
 pilot_window_show(struct pilot_window *window);
 void
 pilot_window_focus(struct pilot_window *window);
+int
+pilot_window_resize(struct pilot_window *widget, pilot_length_t width, pilot_length_t height);
 /**
  * pilot_layout API
  * **/
