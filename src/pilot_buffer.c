@@ -8,7 +8,6 @@ static void
 _pilot_buffer_release(void *data, struct wl_buffer *buffer)
 {
 	struct pilot_buffer *mybuf = data;
-
 	mybuf->busy = 0;
 }
 
@@ -16,9 +15,11 @@ static const struct wl_buffer_listener _st_buffer_listener = {
 	_pilot_buffer_release
 };
 
+#define SHM_FORMAT_SIZE(format)	_s_shm_format_size[format]
+static int _s_shm_format_size[] = { 4, 4};
 struct pilot_buffer *
 pilot_buffer_create(struct pilot_display *display,
-		  int width, int height, uint32_t format)
+		  uint32_t width, uint32_t height, uint32_t format)
 {
 	struct pilot_buffer *buffer;
 	struct wl_shm_pool *pool;
@@ -28,8 +29,9 @@ pilot_buffer_create(struct pilot_display *display,
 	buffer = calloc(1, sizeof *buffer);
 	if (!buffer)
 		return NULL;
+	memset(buffer, 0, sizeof(*buffer));
 
-	stride = width * 4;
+	stride = width * SHM_FORMAT_SIZE(format);
 	size = stride * height;
 
 	fd = os_create_anonymous_file(size);
@@ -45,8 +47,9 @@ pilot_buffer_create(struct pilot_display *display,
 		close(fd);
 		return NULL;
 	}
+	buffer->shm_data = data;
 
-	pool = wl_shm_create_pool(display->shm, fd, size);
+	pool = wl_shm_create_pool(display->platform.shm, fd, size);
 	buffer->buffer = wl_shm_pool_create_buffer(pool, 0,
 						   width, height,
 						   stride, format);
@@ -54,7 +57,8 @@ pilot_buffer_create(struct pilot_display *display,
 	wl_shm_pool_destroy(pool);
 	close(fd);
 
-	buffer->shm_data = data;
+	// paint the padding
+	memset(buffer->shm_data, 0xff, width * height * SHM_FORMAT_SIZE(format));
 
 	return buffer;
 }
@@ -65,3 +69,4 @@ pilot_buffer_destroy(struct pilot_buffer *buffer)
 	wl_buffer_destroy(buffer->buffer);
 	free(buffer);
 }
+

@@ -1,4 +1,6 @@
 targets=test1
 
-all:
-	$(foreach target, $(targets), make -C src $(target))
+all: $(targets)
+
+$(targets) clean:
+	make -C src $@
