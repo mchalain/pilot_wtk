@@ -33,9 +33,9 @@ pilot_theme_get_border(struct pilot_theme *theme)
 }
 
 int
-pilot_theme_resize_window(struct pilot_theme *theme, uint32_t *width, uint32_t *height)
+pilot_theme_resize_window(struct pilot_theme *theme, pilot_length_t *width, pilot_length_t *height)
 {
-	uint32_t decrement_height;
+	pilot_length_t decrement_height;
 	if (*width > theme->border * 2)
 		*width -= theme->border * 2;
 	else
