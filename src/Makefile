@@ -1,6 +1,6 @@
 libname=pilotwtk
 lib-static=lib$(libname).a
-targets=test1 test1-2
+targets=test1 test1-2 test0
 include ../config
 
 CC=$(CROSS_COMPILE)gcc
@@ -47,4 +47,4 @@ $(pilot_SOURCES:%.c=%.o) $($(targets)_SOURCES:%.c=%.o):%.o:%.c
 	$(CC) $(CFLAGS) -I../include -I../weston_shared -c -o $@ $<
 
 clean:
-	$(RM) -rf $(pilot_SOURCES:%.c=%.o) $($(target)_SOURCES:%.c=%.o) $(targets)
+	$(RM) -rf $(pilot_SOURCES:%.c=%.o) $($(target)_SOURCES:%.c=%.o) $(targets) $(lib-static)
