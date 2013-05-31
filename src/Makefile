@@ -20,6 +20,8 @@ ifeq ($(HAVE_POINTER),y)
 CFLAGS+=-DHAVE_POINTER
 endif
 
+CFLAGS+=-I$(PLATFORM)
+
 $(target)_SOURCES=$(target).c
 
 $(pilot_SOURCES:%.c=%.o) $($(target)_SOURCES:%.c=%.o):%.o:%.c

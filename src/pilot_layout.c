@@ -67,7 +67,9 @@ pilot_layout_add_widget(struct pilot_layout *layout, struct pilot_widget *widget
 	if (i < layout->maxwidgets)
 	{
 		if (widget)
+		{
 			layout->widgets[i] = widget;
+		}
 		layout->nbwidgets++;
 	}
 	else

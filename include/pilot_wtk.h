@@ -102,6 +102,7 @@ struct pilot_widget {
 	pilot_length_t width, height;
 	pilot_coord_t x, y;
 	pilot_key_t key;
+	int format;
 	struct {
 		void (*destroy)(void *widget);
 		int (*redraw)(void *widget);
@@ -146,9 +147,12 @@ struct pilot_cursor {
 };
 
 struct pilot_buffer {
-	struct wl_buffer *buffer;
-	void *shm_data;
+	struct pilot_widget *parent;
 	int busy;
+	void *shm_data;
+	struct {
+		struct wl_buffer *buffer;
+	} platform;
 };
 
 struct pilot_layout {
@@ -163,6 +167,9 @@ struct pilot_window {
 	struct pilot_theme *theme;
 	struct pilot_widget *layout;
 	pilot_length_t fullwidth, fullheight;
+	pilot_bitsfield_t fullscreen:1;
+	pilot_bitsfield_t opaque:1;
+	char *name;
 	struct {
 		struct wl_surface *surface;
 		struct wl_shell_surface *shell_surface;
@@ -174,7 +181,6 @@ typedef int(*f_draw_handler)(void *draw_data, void *shm_buffer);
 struct pilot_canvas
 {
 	struct pilot_widget common;
-	int format;
 	struct pilot_buffer *buffers[MAXBUFFERS];
 	struct pilot_buffer *next_buffer;
 	f_draw_handler draw_handler;
@@ -204,16 +210,25 @@ int
 pilot_widget_redraw(struct pilot_widget *widget);
 int
 pilot_widget_size(struct pilot_widget *widget, pilot_length_t *width, pilot_length_t *height);
-struct pilot_display *
-pilot_widget_display(struct pilot_widget *widget);
 void
 pilot_widget_focus(struct pilot_widget *widget);
 int
 pilot_widget_grabkeys(struct pilot_widget *widget, pilot_bool_t yes);
+#ifndef HAVE_INLINE
 pilot_bool_t
 pilot_widget_hasfocus(struct pilot_widget *widget);
 pilot_bool_t
 pilot_widget_hasmouse(struct pilot_widget *widget);
+struct pilot_display *
+pilot_widget_display(struct pilot_widget *widget);
+#else
+inline pilot_bool_t
+pilot_widget_hasfocus(struct pilot_widget *widget){return widget->hasfocus;}
+inline pilot_bool_t
+pilot_widget_hasmouse(struct pilot_widget *widget){return widget->hasmouse;}
+inline struct pilot_display *
+pilot_widget_display(struct pilot_widget *widget){return widget->display;}
+#endif
 /**
  * pilot_display API
  * **/
@@ -271,10 +286,18 @@ pilot_canvas_draw_data(struct pilot_canvas *canvas);
  * pilot_buffer API
  * **/
 struct pilot_buffer *
-pilot_buffer_create(struct pilot_display *display,
-		  pilot_length_t width, pilot_length_t height, uint32_t format);
+pilot_buffer_create(struct pilot_widget *widget);
 void
 pilot_buffer_destroy(struct pilot_buffer *buffer);
+void
+pilot_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window);
+#ifndef HAVE_INLINE
+void
+pilot_buffer_release(struct pilot_buffer *buffer);
+#else
+inline void
+pilot_buffer_release(struct pilot_buffer *buffer){buffer->busy = 0;}
+#endif
 /**
  * pilot_theme API
  * **/

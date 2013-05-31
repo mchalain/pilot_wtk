@@ -84,6 +84,7 @@ pilot_widget_focus(struct pilot_widget *widget)
 	pilot_emit_to(widget->parent, focusChanged, widget, 0);
 }
 
+#ifndef HAVE_INLINE
 pilot_bool_t
 pilot_widget_hasfocus(struct pilot_widget *widget)
 {
@@ -101,3 +102,4 @@ pilot_widget_display(struct pilot_widget *widget)
 {
 	return widget->display;
 }
+#endif

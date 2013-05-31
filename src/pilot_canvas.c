@@ -29,7 +29,7 @@ pilot_canvas_create(struct pilot_widget *parent, int format)
 	canvas->common.action.resize = _pilot_canvas_resize;
 	canvas->common.action.destroy = _pilot_canvas_destroy;
 
-	canvas->format = format;
+	canvas->common.format = format;
 
 	for (i = 0; i < 2; i++)
 		if (_pilot_canvas_add_buffer(canvas) < 0) {
@@ -92,8 +92,7 @@ _pilot_canvas_redraw(void *widget)
 	if (canvas->draw_handler)
 		canvas->draw_handler(canvas->draw_data, buffer->shm_data);
 
-	wl_surface_attach(window->platform.surface, buffer->buffer, 0, 0);
-	buffer->busy = 1;
+	pilot_buffer_paint_window(buffer, window);
 	return 0;
 }
 
@@ -113,8 +112,7 @@ _pilot_canvas_add_buffer(struct pilot_canvas *canvas)
 	for (i = 0; i< MAXBUFFERS; i++) if (canvas->buffers[i] == NULL) break;
 	if (i == MAXBUFFERS)
 		return -1;
-	buffer = pilot_buffer_create(canvas->common.display,
-				canvas->common.width, canvas->common.height, canvas->format);
+	buffer = pilot_buffer_create((struct pilot_widget *)canvas);
 
 	if (!buffer)
 		return -1;
