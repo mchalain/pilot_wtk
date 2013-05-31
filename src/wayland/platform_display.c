@@ -127,3 +127,9 @@ _platform_display_destroy(struct pilot_display *display)
 	wl_display_flush(display->platform.display);
 	wl_display_disconnect(display->platform.display);
 }
+
+static int
+_platform_display_dispatch_events(struct pilot_display *display)
+{
+	return wl_display_dispatch(display->platform.display);
+}

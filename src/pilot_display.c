@@ -11,6 +11,8 @@ static int
 _platform_display_create(struct pilot_display *display);
 static void
 _platform_display_destroy(struct pilot_display *display);
+static int
+_platform_display_dispatch_events(struct pilot_display *display);
 
 /**
  * display object
@@ -76,7 +78,7 @@ pilot_display_mainloop(struct pilot_display *display)
 
 	running = 1;
 	while (running && ret != -1)
-		ret = wl_display_dispatch(display->platform.display);
+		ret = _platform_display_dispatch_events(display);
 
 	return ret;
 }

@@ -81,6 +81,8 @@ pilot_window_destroy(struct pilot_window *window)
 int
 pilot_window_show(struct pilot_window *window)
 {
+	/*TODO*/
+	/* find another way to check if window is already running */
 	if (window->platform.callback)
 		return 0;
 	_pilot_window_redraw(window);
