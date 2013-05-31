@@ -30,8 +30,10 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 	memset(window, 0, sizeof(*window));
 
 	pilot_widget_init(&window->common, parent);
-	if (parent->is_display)
+	if (parent->is_display) {
 		window->common.window = window;
+		window->is_mainwindow = 1;
+	}
 	display = window->common.display;
 
 	window->opaque = 1;
@@ -56,7 +58,8 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 		strcpy(window->name, name);
 	}
 
-	_platform_window_create(window, display);
+	if (window->is_mainwindow)
+		_platform_window_create(window, display);
 
 	pilot_connect(display, focusChanged, (struct pilot_widget *)window, _pilot_window_focusChanged);
 	return window;
@@ -79,7 +82,8 @@ pilot_window_destroy(struct pilot_window *window)
 	if (window->name)
 		free(window->name);
 
-	_platform_window_destroy(window);
+	if (window->is_mainwindow)
+		_platform_window_destroy(window);
 	free(window);
 }
 
@@ -156,7 +160,9 @@ _pilot_window_redraw(void *widget)
 		pilot_widget_redraw(window->layout);
 	}
 	
-	return _platform_window_flush(window);
+	if (window->is_mainwindow)
+		return _platform_window_flush(window);
+	return 0;
 }
 static int
 _pilot_window_resize(void *widget, uint32_t width, uint32_t height)

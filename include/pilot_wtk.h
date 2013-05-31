@@ -173,6 +173,7 @@ struct pilot_window {
 	struct pilot_theme *theme;
 	struct pilot_widget *layout;
 	pilot_length_t fullwidth, fullheight;
+	pilot_bitsfield_t is_mainwindow:1;
 	pilot_bitsfield_t fullscreen:1;
 	pilot_bitsfield_t opaque:1;
 	char *name;
