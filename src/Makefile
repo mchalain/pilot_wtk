@@ -31,7 +31,7 @@ LDFLAGS+=$(WAYLAND_LDFLAGS)
 LIBRARY+=$(WAYLAND_LIBRARY)
 endif
 
-$(targets)_SOURCES:=$(targets:%=%.c)
+targets_SOURCES:=$(targets:%=%.c)
 
 $(lib-static): $(pilot_SOURCES:%.c=%.o)
 	$(AR) -cvq $@ $^
@@ -39,12 +39,12 @@ $(lib-static): $(pilot_SOURCES:%.c=%.o)
 
 libpilot=$(lib-static)
 
-$(targets): $($(targets)_SOURCES:%.c=%.o)
+$(targets): $(targets_SOURCES:%.c=%.o)
 $(targets): $(libpilot)
 	$(LD) $(LDFLAGS) -o $@ $@.o $(libpilot) $(LIBRARY)
 
-$(pilot_SOURCES:%.c=%.o) $($(targets)_SOURCES:%.c=%.o):%.o:%.c
+$(pilot_SOURCES:%.c=%.o) $(targets_SOURCES:%.c=%.o):%.o:%.c
 	$(CC) $(CFLAGS) -I../include -I../weston_shared -c -o $@ $<
 
 clean:
-	$(RM) -rf $(pilot_SOURCES:%.c=%.o) $($(target)_SOURCES:%.c=%.o) $(targets) $(lib-static)
+	$(RM) -rf $(pilot_SOURCES:%.c=%.o) $(targets_SOURCES:%.c=%.o) $(targets) $(lib-static)
