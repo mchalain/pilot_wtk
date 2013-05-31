@@ -128,7 +128,7 @@ _pilot_canvas_next_buffer(struct pilot_canvas *canvas)
 	int i = 0;
 
 	for (i = 0; i < MAXBUFFERS && canvas->buffers[i]; i++)
-		if (!canvas->buffers[i]->busy) {
+		if (!pilot_buffer_busy(canvas->buffers[i])) {
 			buffer = canvas->buffers[i];
 			break;
 		}

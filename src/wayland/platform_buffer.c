@@ -13,9 +13,8 @@ static int
 _platform_buffer_create(struct pilot_buffer *buffer, struct pilot_widget *widget, int fd)
 {
 	struct wl_shm_pool *pool;
-	int size = widget->width * widget->height * SHM_FORMAT_SIZE(widget->format);
 
-	pool = wl_shm_create_pool(widget->display->platform.shm, fd, size);
+	pool = wl_shm_create_pool(widget->display->platform.shm, fd, buffer->size);
 	buffer->platform.buffer = wl_shm_pool_create_buffer(pool, 0,
 						   widget->width, widget->height,
 						   widget->width * SHM_FORMAT_SIZE(widget->format),

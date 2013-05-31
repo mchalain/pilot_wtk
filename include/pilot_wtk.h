@@ -16,6 +16,7 @@ typedef uint32_t pilot_bitsfield_t;
 typedef uint32_t pilot_color_t;
 typedef int16_t pilot_key_t;
 typedef char pilot_bool_t;
+typedef char pilot_mutex_t;
 
 struct pilot_window;
 struct pilot_eglcanvas;
@@ -148,7 +149,8 @@ struct pilot_cursor {
 
 struct pilot_buffer {
 	struct pilot_widget *parent;
-	int busy;
+	pilot_mutex_t busy;
+	uint32_t size;
 	void *shm_data;
 	struct {
 		struct wl_buffer *buffer;
@@ -292,11 +294,19 @@ pilot_buffer_destroy(struct pilot_buffer *buffer);
 void
 pilot_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window);
 #ifndef HAVE_INLINE
+uint32_t
+pilot_buffer_size(struct pilot_buffer *buffer);
 void
 pilot_buffer_release(struct pilot_buffer *buffer);
+pilot_mutex_t
+pilot_buffer_busy(struct pilot_buffer *buffer);
 #else
+inline uint32_t
+pilot_buffer_size(struct pilot_buffer *buffer){return buffer->size;}
 inline void
 pilot_buffer_release(struct pilot_buffer *buffer){buffer->busy = 0;}
+inline pilot_mutex_t
+pilot_buffer_busy(struct pilot_buffer *buffer){return buffer->busy;}
 #endif
 /**
  * pilot_theme API
