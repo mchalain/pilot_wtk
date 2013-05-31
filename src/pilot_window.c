@@ -81,8 +81,6 @@ pilot_window_destroy(struct pilot_window *window)
 int
 pilot_window_show(struct pilot_window *window)
 {
-	wl_shell_surface_set_toplevel(window->platform.shell_surface);
-
 	if (window->platform.callback)
 		return 0;
 	_pilot_window_redraw(window);

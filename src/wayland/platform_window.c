@@ -14,6 +14,8 @@ _platform_window_create(struct pilot_window *window, struct pilot_display *displ
 
 	if (window->name)
 		wl_shell_surface_set_title(window->platform.shell_surface, window->name);
+	wl_shell_surface_set_toplevel(window->platform.shell_surface);
+
 	return 0;
 }
 
@@ -57,7 +59,6 @@ static const struct wl_callback_listener _st_frame_listener;
 static int
 _platform_window_flush(struct pilot_window *window)
 {
-#if 1
 	if (window->opaque || window->fullscreen) {
 		struct wl_region *region;
 		region = wl_compositor_create_region(window->common.display->platform.compositor);
@@ -67,7 +68,7 @@ _platform_window_flush(struct pilot_window *window)
 	} else {
 		wl_surface_set_opaque_region(window->platform.surface, NULL);
 	}
-#endif
+
 	window->platform.callback = wl_surface_frame(window->platform.surface);
 	wl_callback_add_listener(window->platform.callback, &_st_frame_listener, window);
 	return 0;
