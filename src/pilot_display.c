@@ -26,7 +26,8 @@ pilot_display_create(void)
 	memset(display, 0, sizeof(*display));
 
 	pilot_widget_init(&display->common, NULL);
-
+	display->common.display = display;
+	display->common.is_display = 1;
 	display->formats = 0;
 
 	if (_platform_display_create(display) < 0) {

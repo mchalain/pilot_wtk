@@ -27,12 +27,9 @@ pilot_widget_destroy(struct pilot_widget *widget)
 int
 pilot_widget_init(struct pilot_widget *widget, struct pilot_widget *parent)
 {
-	if (!parent) {
-		widget->display = (struct pilot_display*)widget;
-		widget->is_display = 1;
-	} else {
+	if (parent) {
+		widget->window = parent->window;
 		widget->display = parent->display;
-		widget->is_display = 0;
 	}
 	widget->parent = parent;
 	return 0;

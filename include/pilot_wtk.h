@@ -89,6 +89,7 @@ struct pilot_theme {
 
 struct pilot_widget {
 	struct pilot_display *display;
+	struct pilot_window *window;
 	struct pilot_widget *parent;
 	_pilot_signal(pilot_widget, clicked, pilot_key_t key);
 	_pilot_signal(pilot_widget, scrolled, pilot_coord_t x, pilot_coord_t y);

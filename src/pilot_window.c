@@ -19,7 +19,7 @@ static int
 _pilot_window_focusChanged(struct pilot_widget *widget, struct pilot_window *window, char in);
 
 struct pilot_window *
-pilot_window_create(struct pilot_widget *widget, char *name, uint32_t width, uint32_t height)
+pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uint32_t height)
 {
 	struct pilot_window *window;
 	struct pilot_display *display;
@@ -29,7 +29,9 @@ pilot_window_create(struct pilot_widget *widget, char *name, uint32_t width, uin
 		return NULL;
 	memset(window, 0, sizeof(*window));
 
-	pilot_widget_init(&window->common, widget);
+	pilot_widget_init(&window->common, parent);
+	if (parent->is_display)
+		window->common.window = window;
 	display = window->common.display;
 	
 	window->fullwidth = width;

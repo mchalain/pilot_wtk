@@ -81,7 +81,7 @@ _pilot_canvas_redraw(void *widget)
 {
 	struct pilot_canvas *canvas = widget;
 	struct pilot_buffer *buffer;
-	struct pilot_window *window = (struct pilot_window *)canvas->common.parent;
+	struct pilot_window *window = (struct pilot_window *)canvas->common.window;
 
 	buffer = _pilot_canvas_next_buffer(canvas);
 	if (!buffer) {
