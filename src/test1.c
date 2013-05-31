@@ -106,6 +106,7 @@ int click(struct pilot_widget *widget, pilot_key_t key)
 }
 int main_window_focus(struct pilot_widget *mainwindow, pilot_bool_t in)
 {
+	pilot_widget_grabkeys(mainwindow, in);
 	if (in)
 	{
 		printf("%p I have the focus\n", mainwindow);
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
 	 **/
 	display = pilot_display_create();
 
-	mainwindow = pilot_window_create((struct pilot_widget *)display, argv[0], 250, 250);
+	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", 250, 250);
 	if (!mainwindow)
 		return -1;
 	if (mainwindow_init(mainwindow) < 0)
@@ -143,7 +144,7 @@ int main(int argc, char **argv)
 	pilot_connect(mainwidget, clicked, mainwidget, click);
 	pilot_window_show(mainwindow);
 
-	mainwindow2 = pilot_window_create((struct pilot_widget *)display, argv[0], 250, 250);
+	mainwindow2 = pilot_window_create((struct pilot_widget *)display, "window2", 250, 250);
 	if (!mainwindow2)
 		return -1;
 	if (mainwindow_init(mainwindow2) < 0)

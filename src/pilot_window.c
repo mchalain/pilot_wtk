@@ -16,7 +16,7 @@ _platform_window_create(struct pilot_window *window, struct pilot_display *displ
 static void
 _platform_window_destroy(struct pilot_window *window);
 static int
-_pilot_window_grabkeys(struct pilot_widget *widget, struct pilot_window *window, char in);
+_pilot_window_focusChanged(struct pilot_widget *widget, struct pilot_window *window, char in);
 
 struct pilot_window *
 pilot_window_create(struct pilot_widget *widget, char *name, uint32_t width, uint32_t height)
@@ -51,7 +51,7 @@ pilot_window_create(struct pilot_widget *widget, char *name, uint32_t width, uin
 
 	_platform_window_create(window, display);
 
-	pilot_connect(display, focusChanged, (struct pilot_widget *)window, _pilot_window_grabkeys);
+	pilot_connect(display, focusChanged, (struct pilot_widget *)window, _pilot_window_focusChanged);
 	return window;
 }
 
@@ -90,12 +90,11 @@ pilot_window_show(struct pilot_window *window)
 
 
 static int
-_pilot_window_grabkeys(struct pilot_widget *widget, struct pilot_window *window, char in)
+_pilot_window_focusChanged(struct pilot_widget *widget, struct pilot_window *window, char in)
 {
 	if ((void *)widget == (void *)window)
 	{
 		pilot_emit(widget, focusChanged, in);
-		return pilot_widget_grabkeys((struct pilot_widget *)window, in);
 	}
 	return 0;
 }
