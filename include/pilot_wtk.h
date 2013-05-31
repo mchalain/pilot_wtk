@@ -24,11 +24,6 @@ struct pilot_canvas;
 struct pilot_cursor;
 struct pilot_theme;
 
-struct pilot_theme {
-	struct pilot_widget *caption;
-	int border;
-};
-
 #define _pilot_signal(obj, signal,...) \
 	struct { \
 		struct obj##_##signal##_slot{ \
@@ -165,6 +160,14 @@ struct pilot_layout {
 	struct pilot_widget *widgets[MAXWIDGETS];
 };
 
+struct pilot_theme {
+	struct pilot_window *window;
+	struct pilot_buffer *buffer;
+	struct pilot_widget *caption;
+	pilot_length_t border;
+	pilot_color_t bgcolor;
+};
+
 struct pilot_window {
 	struct pilot_widget common;
 	struct pilot_theme *theme;
@@ -252,7 +255,7 @@ pilot_display_search_window(struct pilot_display *display, f_search_handler sear
  * pilot_window API
  * **/
 struct pilot_window *
-pilot_window_create(struct pilot_widget *parent, char *name, pilot_length_t width, pilot_length_t height);
+pilot_window_create(struct pilot_widget *parent, char *name, pilot_length_t width, pilot_length_t height, struct pilot_theme *theme);
 void
 pilot_window_destroy(struct pilot_window *window);
 int
@@ -313,13 +316,17 @@ pilot_buffer_busy(struct pilot_buffer *buffer){return buffer->busy;}
  * pilot_theme API
  * **/
 struct pilot_theme *
-pilot_theme_create(struct pilot_window *window);
+pilot_theme_create(struct pilot_display *display);
+struct pilot_theme *
+pilot_theme_duplicate(struct pilot_theme *theme);
 void
 pilot_theme_destroy(struct pilot_theme *theme);
 struct pilot_widget *
 pilot_theme_get_caption(struct pilot_theme *theme);
 pilot_length_t
 pilot_theme_get_border(struct pilot_theme *theme);
+int
+pilot_theme_redraw_window(struct pilot_theme *theme);
 int
 pilot_theme_resize_window(struct pilot_theme *theme, pilot_length_t *width, pilot_length_t *height);
 

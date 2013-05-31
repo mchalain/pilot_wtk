@@ -4,19 +4,50 @@
 #include <pilot_wtk.h>
 
 struct pilot_theme *
-pilot_theme_create(struct pilot_window *window)
+pilot_theme_create(struct pilot_display *display)
 {
 	struct pilot_theme *theme;
 
 	theme = malloc(sizeof (*theme));
 	memset(theme, 0, sizeof(*theme));
+	theme->window = NULL;
 
+	theme->bgcolor = 0x0055A5AA;
+	theme->border = 2;
 	return theme;
+}
+
+struct pilot_theme *
+pilot_theme_duplicate(struct pilot_theme *theme)
+{
+	struct pilot_theme *newtheme;
+
+	newtheme = pilot_theme_create(NULL);
+	newtheme->window = theme->window;
+	newtheme->bgcolor = theme->bgcolor;
+	newtheme->border = theme->border;
+	
+	if (newtheme->window)
+	{
+		int i = 0;
+		newtheme->buffer = pilot_buffer_create(newtheme->window);
+		pilot_color_t *shm_data = (pilot_color_t *)newtheme->buffer->shm_data;
+		for (i = 0; i < pilot_buffer_size(newtheme->buffer); i+=4) {
+			*shm_data = theme->bgcolor;
+			if (newtheme->window->opaque)
+				*shm_data |= 0xFF000000;
+			shm_data++;
+		}
+	}
+
+	return newtheme;
 }
 
 void
 pilot_theme_destroy(struct pilot_theme *theme)
 {
+	if (theme->buffer)
+		pilot_buffer_destroy(theme->buffer);
 	free(theme);
 }
 
@@ -30,6 +61,19 @@ uint32_t
 pilot_theme_get_border(struct pilot_theme *theme)
 {
 	return theme->border;
+}
+
+int
+pilot_theme_redraw_window(struct pilot_theme *theme)
+{
+	if (!theme->window)
+		return -1;
+	if (theme->caption)
+		pilot_widget_redraw(theme->caption);
+	if (theme->buffer)
+	{
+		pilot_buffer_paint_window(theme->buffer, theme->window->common.window);
+	}
 }
 
 int

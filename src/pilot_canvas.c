@@ -52,8 +52,10 @@ pilot_canvas_destroy(struct pilot_canvas *canvas)
 {
 	int i;
 	for (i = 0; i < MAXBUFFERS; i++)
-		if (canvas->buffers[i])
+		if (canvas->buffers[i]) {
 			pilot_buffer_destroy(canvas->buffers[i]);
+			canvas->buffers[i] = 0;
+		}
 
 	free(canvas);
 }

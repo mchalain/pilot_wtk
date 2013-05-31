@@ -125,13 +125,15 @@ int main(int argc, char **argv)
 	struct pilot_display *display;
 	struct pilot_window *mainwindow;
 	struct pilot_window *mainwindow2;
+	struct pilot_theme *theme = NULL;
 
 	/**
 	 * Setup
 	 **/
 	display = pilot_display_create();
-
-	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", 250, 250);
+	//theme = pilot_theme_create(display);
+	
+	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", 250, 250, theme);
 	if (!mainwindow)
 		return -1;
 	if (mainwindow_init(mainwindow) < 0)
@@ -144,7 +146,8 @@ int main(int argc, char **argv)
 	pilot_connect(mainwidget, clicked, mainwidget, click);
 	pilot_window_show(mainwindow);
 
-	mainwindow2 = pilot_window_create((struct pilot_widget *)display, "window2", 250, 250);
+/*
+	mainwindow2 = pilot_window_create((struct pilot_widget *)display, "window2", 250, 250, NULL);
 	if (!mainwindow2)
 		return -1;
 	if (mainwindow_init(mainwindow2) < 0)
@@ -153,7 +156,7 @@ int main(int argc, char **argv)
 	pilot_display_add_window(display, mainwindow2);
 
 	pilot_window_show(mainwindow2);
-
+*/
 	/**
 	 * MainLoop
 	 **/
@@ -164,8 +167,8 @@ int main(int argc, char **argv)
 	 **/
 	mainwindow_fini(mainwindow);
 	pilot_window_destroy(mainwindow);
-	mainwindow_fini(mainwindow2);
-	pilot_window_destroy(mainwindow2);
+	//mainwindow_fini(mainwindow2);
+	//pilot_window_destroy(mainwindow2);
 	pilot_display_destroy(display);
 	return ret;
 }

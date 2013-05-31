@@ -131,14 +131,14 @@ int main(int argc, char **argv)
 	 **/
 	display = pilot_display_create();
 
-	mainwindow = pilot_window_create((struct pilot_widget *)display, argv[0], 500, 500);
+	mainwindow = pilot_window_create((struct pilot_widget *)display, argv[0], 500, 500, NULL);
 	if (!mainwindow)
 		return -1;
 
 	pilot_display_add_window(display, mainwindow);
 
 
-	window2 = pilot_window_create((struct pilot_widget *)mainwindow, "toto", 250, 250);
+	window2 = pilot_window_create((struct pilot_widget *)mainwindow, "toto", 250, 250, NULL);
 	if (!window2)
 		return -1;
 	if (mainwindow_init(window2) < 0)

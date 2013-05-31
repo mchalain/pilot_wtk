@@ -50,13 +50,16 @@ int main(int argc, char **argv)
 	int ret = 0;
 	struct pilot_display *display;
 	struct pilot_window *mainwindow;
+	struct pilot_theme *theme;
 
 	/**
 	 * Setup
 	 **/
 	display = pilot_display_create();
 
-	mainwindow = pilot_window_create((struct pilot_widget *)display, "coucou", 500, 500);
+	theme = pilot_theme_create(display);
+
+	mainwindow = pilot_window_create((struct pilot_widget *)display, "coucou", 500, 500, theme);
 	if (!mainwindow)
 		return -1;
 	mainwindow_init(mainwindow);
@@ -78,6 +81,7 @@ int main(int argc, char **argv)
 	 **/
 	mainwindow_fini(mainwindow);
 	pilot_window_destroy(mainwindow);
+	pilot_theme_destroy(theme);
 	pilot_display_destroy(display);
 	return ret;
 }

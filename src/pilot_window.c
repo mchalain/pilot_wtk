@@ -19,7 +19,7 @@ static int
 _pilot_window_focusChanged(struct pilot_widget *widget, struct pilot_window *window, char in);
 
 struct pilot_window *
-pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uint32_t height)
+pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uint32_t height, struct pilot_theme *theme)
 {
 	struct pilot_window *window;
 	struct pilot_display *display;
@@ -33,12 +33,17 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 	if (parent->is_display)
 		window->common.window = window;
 	display = window->common.display;
-	
+
+	window->opaque = 1;
 	window->fullwidth = width;
 	window->fullheight = height;
-	//window->theme = pilot_theme_create(display);
-	if (window->theme)
+	window->common.width = width;
+	window->common.height = height;
+	if (theme) {
+		theme->window = window;
+		window->theme = pilot_theme_duplicate(theme);
 		pilot_theme_resize_window(window->theme, &width, &height);
+	}
 	window->common.width = width;
 	window->common.height = height;
 
@@ -143,7 +148,10 @@ static int
 _pilot_window_redraw(void *widget)
 {
 	struct pilot_window *window = widget;
-	
+
+	if (window->theme) {
+		pilot_theme_redraw_window(window->theme);
+	}
 	if (window->layout) {
 		pilot_widget_redraw(window->layout);
 	}
