@@ -117,6 +117,10 @@ struct pilot_display {
 	_pilot_signal(pilot_display, keyChanged, pilot_key_t key, pilot_bool_t state);
 	_pilot_signal(pilot_display, focusChanged, struct pilot_window *window, pilot_bool_t in);
 	_pilot_signal(pilot_display, mouseEntered, struct pilot_window *window, pilot_bool_t in);
+#ifdef HAVE_SUSPEND_RESUME
+	_pilot_signal(pilot_display, suspended);
+	_pilot_signal(pilot_display, resumed);
+#endif
 	_pilot_signal(pilot_display, mouse_scrolled, pilot_coord_t x, pilot_coord_t y);
 	_pilot_signal(pilot_display, mouse_clicked, pilot_key_t key, pilot_bool_t state);
 	_pilot_signal(pilot_display, mouse_moved, pilot_coord_t x, pilot_coord_t y);
@@ -249,6 +253,13 @@ int
 pilot_display_mainloop(struct pilot_display *display);
 int
 pilot_display_exit(struct pilot_display *display, int ret);
+#ifdef HAVE_SUSPEND_RESUME
+int
+pilot_display_suspend(struct pilot_display *display);
+int
+pilot_display_resume(struct pilot_display *display);
+#endif
+typedef pilot_bool_t (*f_search_handler)(struct pilot_window *);
 typedef pilot_bool_t (*f_search_handler)(struct pilot_window *);
 struct pilot_window *
 pilot_display_search_window(struct pilot_display *display, f_search_handler search);
