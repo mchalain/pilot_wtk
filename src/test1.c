@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pilot_atk.h>
 #include <pilot_wtk.h>
 #include <linux/input.h>
+
+struct pilot_application *g_application;
 
 struct mycanvas_data
 {
@@ -57,13 +60,13 @@ paint_pixels(void *image, int padding, int width, int height, uint32_t time)
 	}
 }
 
-int canvas_draw(void *draw_data, void *shm_buffer)
+int canvas_draw(void *draw_data, void *image)
 {
 	struct mycanvas_data *data = draw_data;
 	uint32_t w, h;
 	pilot_widget_size((struct pilot_widget *)data->window, &w, &h);
-	paint_pixels(shm_buffer, 20, w, h, data->change);
-	return 0;
+	paint_pixels(image, 20, w, h, data->change);
+	return 1;
 }
 
 int
@@ -71,15 +74,21 @@ mainwindow_init(struct pilot_window *mainwindow)
 {
 	struct pilot_canvas *canvas;
 	
-	canvas = pilot_canvas_create((struct pilot_widget *)mainwindow, WL_SHM_FORMAT_XRGB8888);
+	canvas = pilot_canvas_create((struct pilot_widget *)mainwindow, PILOT_DISPLAY_XRGB8888);
 	if (!canvas)
 		return -1;
 	canvas_data.canvas = canvas;
 	canvas_data.window = mainwindow;
 	canvas_data.change = 0;
 
-	pilot_canvas_set_draw_handler(canvas, canvas_draw, &canvas_data);
+	//pilot_canvas_set_draw_handler(canvas, canvas_draw, &canvas_data);
 	pilot_window_set_layout(mainwindow, (struct pilot_widget*)canvas);
+	void *image;
+	if (!pilot_canvas_lock(canvas_data.canvas, &image)) {
+		canvas_draw(&canvas_data, image);
+		pilot_canvas_unlock(canvas_data.canvas);
+		pilot_canvas_flip(canvas_data.canvas);
+	}
 	return 0;
 }
 
@@ -91,9 +100,15 @@ mainwindow_fini(struct pilot_window *mainwindow)
 int keypressed(struct pilot_widget *widget, pilot_key_t key)
 {
 	if (key == KEY_ESC)
-		pilot_display_exit(pilot_widget_display(widget), 0);
+		pilot_application_exit(g_application, 0);
 	else {
 		canvas_data.change+=16;
+		void *image;
+		if (!pilot_canvas_lock(canvas_data.canvas, &image)) {
+			canvas_draw(&canvas_data, image);
+			pilot_canvas_unlock(canvas_data.canvas);
+			pilot_canvas_flip(canvas_data.canvas);
+		}
 		pilot_widget_redraw(widget);
 	}
 	return 0;
@@ -130,7 +145,8 @@ int main(int argc, char **argv)
 	/**
 	 * Setup
 	 **/
-	display = pilot_display_create();
+	g_application = pilot_application_create(argc, argv);
+	display = pilot_display_create(g_application);
 	//theme = pilot_theme_create(display);
 	
 	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", 250, 250, theme);
@@ -140,11 +156,13 @@ int main(int argc, char **argv)
 		return -1;
 
 	pilot_display_add_window(display, mainwindow);
+	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
 
 	struct pilot_widget *mainwidget = (struct pilot_widget *)mainwindow;
 	pilot_connect(mainwidget, focusChanged, mainwidget, main_window_focus);
 	pilot_connect(mainwidget, clicked, mainwidget, click);
 	pilot_window_show(mainwindow);
+	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
 
 /*
 	mainwindow2 = pilot_window_create((struct pilot_widget *)display, "window2", 250, 250, NULL);
@@ -160,7 +178,8 @@ int main(int argc, char **argv)
 	/**
 	 * MainLoop
 	 **/
-	ret = pilot_display_mainloop(display);
+	ret = pilot_application_run(g_application);
+	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
 
 	/**
 	 * Cleanup
@@ -170,5 +189,6 @@ int main(int argc, char **argv)
 	//mainwindow_fini(mainwindow2);
 	//pilot_window_destroy(mainwindow2);
 	pilot_display_destroy(display);
+	pilot_application_destroy(g_application);
 	return ret;
 }

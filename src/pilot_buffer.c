@@ -18,7 +18,7 @@ struct pilot_buffer *
 pilot_buffer_create(struct pilot_widget *parent)
 {
 	struct pilot_buffer *buffer;
-	int fd, stride, pixel;
+	int fd, pixel;
 	void *data;
 
 	buffer = calloc(1, sizeof *buffer);
@@ -46,11 +46,13 @@ pilot_buffer_create(struct pilot_widget *parent)
 	}
 	buffer->shm_data = data;
 
-	_platform_buffer_create(buffer, parent, fd);
-	close(fd);
-
 	// paint the padding
 	memset(buffer->shm_data, 0xff, buffer->size);
+
+	_platform_buffer_create(buffer, parent, fd);
+	close(fd);
+	mutex_init(buffer->lock, NULL);
+	cond_init(buffer->cond, NULL);
 
 	return buffer;
 }
@@ -58,15 +60,67 @@ pilot_buffer_create(struct pilot_widget *parent)
 void
 pilot_buffer_destroy(struct pilot_buffer *buffer)
 {
+	mutex_destroy(buffer->lock);
+	cond_destroy(buffer->cond);
 	_platform_buffer_destroy(buffer);
+	buffer->busy =0;
 	free(buffer);
+}
+
+int
+pilot_buffer_draw(struct pilot_buffer *buffer, pilot_color_t color)
+{
+	int ret;
+	// paint the padding
+	ret = colorset((void *)buffer->shm_data, color, buffer->size)? 1: 0;
+	return ret;
 }
 
 void
 pilot_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window)
 {
-	_platform_buffer_paint_window(buffer, window);
-	buffer->busy = 1;
+	LOG_DEBUG("%s", __FUNCTION__);
+	if (! mutex_lock(buffer->lock)) {
+		_platform_buffer_paint_window(buffer, window);
+		buffer->busy=1;
+		buffer->ready = 0;
+		mutex_unlock(buffer->lock);
+	}
+}
+
+int
+pilot_buffer_lock(struct pilot_buffer *buffer, void **image)
+{
+	int ret;
+	if (!(ret = mutex_lock(buffer->lock))) {
+	//if (!(ret =!(buffer->lock = (!(buffer->lock))? 1 : 0))) {
+		LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+		while ( buffer->busy || buffer->ready) {
+	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+			ret = cond_wait(buffer->cond, buffer->lock);
+			if (ret)
+				break;
+		}
+		*image = (void *)buffer->shm_data;
+	}
+	return ret;
+}
+
+void 
+pilot_buffer_unlock(struct pilot_buffer *buffer)
+{
+	buffer->ready = 1;
+	mutex_unlock(buffer->lock);
+}
+
+void
+pilot_buffer_release(struct pilot_buffer *buffer)
+{
+	if (!mutex_lock(buffer->lock)) {
+		buffer->busy=0;
+		cond_signal(buffer->cond);
+		mutex_unlock(buffer->lock);
+	}
 }
 
 #ifndef HAVE_INLINE
@@ -76,17 +130,18 @@ pilot_buffer_size(struct pilot_buffer *buffer)
 	return buffer->size;
 }
 
-void
-pilot_buffer_release(struct pilot_buffer *buffer)
-{
-	buffer->busy = 0;
-}
-
-pilot_mutex_t
+pilot_bool_t
 pilot_buffer_busy(struct pilot_buffer *buffer)
 {
 	return buffer->busy;
 }
+
+pilot_bool_t
+pilot_buffer_ready(struct pilot_buffer *buffer)
+{
+	return buffer->ready;
+}
+
 #endif
 
 #include "platform_buffer.c"

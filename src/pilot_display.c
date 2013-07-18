@@ -3,14 +3,18 @@
 #include <string.h>
 #include <assert.h>
 #include <pilot_wtk.h>
+#include <pilot_atk.h>
+
+#define LOG_DEBUG(format,...) fprintf(stderr, format"\n", __VA_ARGS__);
 
 static int running = 0;
-static struct pilot_window *
-_pilot_display_search_window(struct pilot_display *display, struct wl_surface *surface);
 static int
-_platform_display_create(struct pilot_display *display);
+_platform_display_create(struct pilot_display *display,
+							struct pilot_connector *connector);
 static void
 _platform_display_destroy(struct pilot_display *display);
+static int
+_platform_display_prepare_wait(struct pilot_display *display);
 static int
 _platform_display_dispatch_events(struct pilot_display *display);
 
@@ -18,7 +22,7 @@ _platform_display_dispatch_events(struct pilot_display *display);
  * display object
  **/
 struct pilot_display *
-pilot_display_create(void)
+pilot_display_create(struct pilot_application *application)
 {
 	struct pilot_display *display;
 
@@ -32,10 +36,15 @@ pilot_display_create(void)
 	display->common.is_display = 1;
 	display->formats = 0;
 
-	if (_platform_display_create(display) < 0) {
+	struct pilot_connector *connector = 
+		pilot_connector_create(display);
+	if (_platform_display_create(display, connector) < 0) {
 		free(display);
 		return NULL;
 	}
+	connector->action.prepare_wait = _platform_display_prepare_wait;
+	connector->action.dispatch_events = _platform_display_dispatch_events;
+	pilot_application_addconnector(application, connector);
 
 	return display;
 }
@@ -46,41 +55,21 @@ pilot_display_destroy(struct pilot_display *display)
 	_platform_display_destroy(display);
 	free(display);
 }
-int
-pilot_display_exit(struct pilot_display *display, int ret)
-{
-	running = 0;
-	return ret;
-}
 
 int
 pilot_display_add_window(struct pilot_display *display, struct pilot_window *window)
 {
-	int i;
-
-	/**
-	 * seach the first window free entry on display
-	 **/
-	typeof (display->windows) *windows_it = &display->windows;
-	while (windows_it->next) windows_it = windows_it->next;
-	windows_it->item = window;
-	windows_it->next = malloc(sizeof(typeof (display->windows)));
-	windows_it = windows_it->next;
-	memset(windows_it, 0, sizeof(typeof (display->windows)));
-
+	pilot_list_append(display->windows, window);
 	return 0;
 }
 
 int
-pilot_display_mainloop(struct pilot_display *display)
+pilot_display_add_input(struct pilot_display *display, struct pilot_input *input)
 {
-	int ret = 0;
-
-	running = 1;
-	while (running && ret != -1)
-		ret = _platform_display_dispatch_events(display);
-
-	return ret;
+	LOG_DEBUG("%s", __FUNCTION__);
+	pilot_list_append(display->inputs, input);
+	pilot_emit(display, inputChanged, input);
+	return 0;
 }
 
 struct pilot_window *
@@ -89,17 +78,6 @@ pilot_display_search_window(struct pilot_display *display, f_search_handler sear
 	typeof (display->windows) *windows_it = &display->windows;
 	while (windows_it->item) {
 		if (search(windows_it->item)) break;
-		windows_it = windows_it->next;
-	}
-	return windows_it->item;
-}
-
-static struct pilot_window *
-_pilot_display_search_window(struct pilot_display *display, struct wl_surface *surface)
-{
-	typeof (display->windows) *windows_it = &display->windows;
-	while (windows_it->item) {
-		if (windows_it->item->platform.surface == surface) break;
 		windows_it = windows_it->next;
 	}
 	return windows_it->item;

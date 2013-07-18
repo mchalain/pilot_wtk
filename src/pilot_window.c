@@ -17,6 +17,8 @@ static void
 _platform_window_destroy(struct pilot_window *window);
 static int
 _pilot_window_focusChanged(struct pilot_widget *widget, struct pilot_window *window, char in);
+static int
+_pilot_window_installinput(struct pilot_widget *widget, struct pilot_input *input);
 
 struct pilot_window *
 pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uint32_t height, struct pilot_theme *theme)
@@ -69,6 +71,7 @@ static void
 _pilot_window_destroy(void *widget)
 {
 	struct pilot_window *window = widget;
+	mutex_destroy(&window->paintmutex);
 	if (window->theme)
 		pilot_theme_destroy(window->theme);
 	pilot_window_destroy(window);
@@ -90,13 +93,11 @@ pilot_window_destroy(struct pilot_window *window)
 int
 pilot_window_show(struct pilot_window *window)
 {
+	int ret;
 	/*TODO*/
-	/* find another way to check if window is already running */
-	if (window->platform.callback)
-		return 0;
-	_pilot_window_redraw(window);
-
-	return 0;
+	ret = _pilot_window_redraw(window);
+	if (ret >= 0) ret = 0;
+	return ret;
 }
 
 
@@ -151,19 +152,21 @@ pilot_window_fullscreen(struct pilot_window *window)
 static int
 _pilot_window_redraw(void *widget)
 {
+	int ret = 0;
 	struct pilot_window *window = widget;
 
 	if (window->theme) {
-		pilot_theme_redraw_window(window->theme);
+		ret = pilot_theme_redraw_window(window->theme);
 	}
 	if (window->layout) {
-		pilot_widget_redraw(window->layout);
+		ret += pilot_widget_redraw(window->layout);
 	}
-	
-	if (window->is_mainwindow)
+	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	if (ret && window->is_mainwindow)
 		return _platform_window_flush(window);
-	return 0;
+	return ret;
 }
+
 static int
 _pilot_window_resize(void *widget, uint32_t width, uint32_t height)
 {

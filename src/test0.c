@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pilot_atk.h>
 #include <pilot_wtk.h>
 #include <linux/input.h>
+
+struct pilot_application *g_application;
 
 int
 mainwindow_init(struct pilot_window *mainwindow)
@@ -18,7 +21,7 @@ mainwindow_fini(struct pilot_window *mainwindow)
 int keypressed(struct pilot_widget *widget, pilot_key_t key)
 {
 	if (key == KEY_ESC)
-		pilot_display_exit(pilot_widget_display(widget), 0);
+		pilot_application_exit(g_application, 0);
 	else {
 		pilot_widget_redraw(widget);
 	}
@@ -55,7 +58,8 @@ int main(int argc, char **argv)
 	/**
 	 * Setup
 	 **/
-	display = pilot_display_create();
+	g_application = pilot_application_create(argc, argv);
+	display = pilot_display_create(g_application);
 
 	theme = pilot_theme_create(display);
 
@@ -74,7 +78,7 @@ int main(int argc, char **argv)
 	/**
 	 * MainLoop
 	 **/
-	ret = pilot_display_mainloop(display);
+	ret = pilot_application_run(g_application);
 
 	/**
 	 * Cleanup
@@ -83,5 +87,6 @@ int main(int argc, char **argv)
 	pilot_window_destroy(mainwindow);
 	pilot_theme_destroy(theme);
 	pilot_display_destroy(display);
+	pilot_application_destroy(g_application);
 	return ret;
 }

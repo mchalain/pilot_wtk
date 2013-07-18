@@ -4,6 +4,9 @@
 #include <stdarg.h>
 #include <pilot_wtk.h>
 
+static int
+_pilot_widget_installgrab(struct pilot_widget *widget, struct pilot_input *input);
+
 struct pilot_widget *
 pilot_widget_create(struct pilot_widget *parent)
 {
@@ -46,14 +49,16 @@ pilot_widget_size(struct pilot_widget *widget, uint32_t *width, uint32_t *height
 int
 pilot_widget_redraw(struct pilot_widget *widget)
 {
+	int ret = 0;
 	if (widget->action.redraw)
-		widget->action.redraw((void *)widget);
-	return 0;
+		ret = widget->action.redraw((void *)widget);
+	return ret;
 }
 
 static int
 _pilot_widget_keysend(struct pilot_widget *widget, pilot_key_t key, pilot_bool_t state)
 {
+	LOG_DEBUG("%s", __FUNCTION__);
 	if (state)
 		widget->key = key;
 	else {
@@ -64,13 +69,35 @@ _pilot_widget_keysend(struct pilot_widget *widget, pilot_key_t key, pilot_bool_t
 	return 0;
 }
 
+static int
+_pilot_widget_installgrab(struct pilot_widget *widget, struct pilot_input *input)
+{
+	LOG_DEBUG("%s %p %d", __FUNCTION__, input, input->id);
+	if (input && input->id == PILOT_INPUT_KEYBOARD)
+		pilot_connect(input, keyChanged, widget, _pilot_widget_keysend);
+	return 0;
+}
+
+static int
+_pilot_widget_uninstallgrab(struct pilot_widget *widget, struct pilot_input *input)
+{
+	LOG_DEBUG("%s %p %d", __FUNCTION__, input, input->id);
+	if (input && input->id == PILOT_INPUT_KEYBOARD)
+		pilot_disconnect(input, keyChanged, widget, _pilot_widget_keysend);
+	return 0;
+}
+
 int
 pilot_widget_grabkeys(struct pilot_widget *widget, pilot_bool_t yes)
 {
-	if (yes)
-		pilot_connect(widget->display, keyChanged, widget, _pilot_widget_keysend);
-	else
-		pilot_disconnect(widget->display, keyChanged, widget, _pilot_widget_keysend);
+	if (yes) {
+		pilot_list_foreach(widget->display->inputs, _pilot_widget_installgrab, widget);
+		pilot_connect(widget->display, inputChanged, widget, _pilot_widget_installgrab);
+	} else {
+		LOG_DEBUG("%s disconnect inputChanged ", __FUNCTION__);
+		pilot_list_foreach(widget->display->inputs, _pilot_widget_uninstallgrab, widget);
+		pilot_disconnect(widget->display, inputChanged, widget, _pilot_widget_installgrab);
+	}
 	return 0;
 }
 

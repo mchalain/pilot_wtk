@@ -31,12 +31,15 @@ pilot_canvas_create(struct pilot_widget *parent, int format)
 
 	canvas->common.format = format;
 
+	canvas->onscreenid = 1;
+	canvas->offscreenid = 0;
 	for (i = 0; i < 2; i++)
 		if (_pilot_canvas_add_buffer(canvas) < 0) {
 			free(canvas);
 			return NULL;
 		}
-		
+	mutex_init(canvas->paintmutex, NULL);
+	
 	return canvas;
 }
 
@@ -51,6 +54,7 @@ void
 pilot_canvas_destroy(struct pilot_canvas *canvas)
 {
 	int i;
+	mutex_destroy(canvas->paintmutex);
 	for (i = 0; i < MAXBUFFERS; i++)
 		if (canvas->buffers[i]) {
 			pilot_buffer_destroy(canvas->buffers[i]);
@@ -78,24 +82,61 @@ pilot_canvas_draw_data(struct pilot_canvas *canvas)
 	return canvas->draw_data;
 }
 
+int
+pilot_canvas_lock(struct pilot_canvas *canvas, void **image)
+{
+	int ret = -1;
+	int i;
+	i = canvas->offscreenid;
+	if (canvas->buffers[i])
+		ret = pilot_buffer_lock(canvas->buffers[i], image);
+	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	return ret;
+}
+
+void
+pilot_canvas_unlock(struct pilot_canvas *canvas)
+{
+	int i;
+	i = canvas->offscreenid;
+	if (canvas->buffers[i])
+		pilot_buffer_unlock(canvas->buffers[i]);
+	LOG_DEBUG("%s", __FUNCTION__);
+}
+
+int
+pilot_canvas_flip(struct pilot_canvas *canvas)
+{
+	int i;
+	i = canvas->offscreenid;
+	canvas->offscreenid = (i + 1) & 0x1;
+	pilot_emit(canvas, fliped);
+}
+
 static int
 _pilot_canvas_redraw(void *widget)
 {
+	int ret = 0;
 	struct pilot_canvas *canvas = widget;
 	struct pilot_buffer *buffer;
 	struct pilot_window *window = (struct pilot_window *)canvas->common.window;
+	int i;
 
-	buffer = _pilot_canvas_next_buffer(canvas);
-	if (!buffer) {
-		fprintf(stderr,
-			"Both buffers busy at redraw(). Server bug?\n");
-		abort();
+	i = (canvas->onscreenid + 1) & 0x1;
+	buffer = canvas->buffers[i];
+	if (buffer && !pilot_buffer_busy(buffer)) {
+		if (canvas->draw_handler)
+			ret = canvas->draw_handler(canvas->draw_data, buffer->shm_data);
+		else
+			ret = pilot_buffer_ready(buffer);
+		LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+		if (ret) {
+			pilot_buffer_paint_window(buffer, window);	
+			canvas->onscreenid = i;
+		}
 	}
-	if (canvas->draw_handler)
-		canvas->draw_handler(canvas->draw_data, buffer->shm_data);
-
-	pilot_buffer_paint_window(buffer, window);
-	return 0;
+	
+	return ret;
 }
 
 static int

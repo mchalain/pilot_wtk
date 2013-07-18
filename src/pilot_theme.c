@@ -24,20 +24,14 @@ pilot_theme_duplicate(struct pilot_theme *theme)
 
 	newtheme = pilot_theme_create(NULL);
 	newtheme->window = theme->window;
-	newtheme->bgcolor = theme->bgcolor;
+	newtheme->bgcolor = theme->bgcolor | (newtheme->window->opaque)? 0xFF000000: 0;
 	newtheme->border = theme->border;
 	
 	if (newtheme->window)
 	{
 		int i = 0;
-		newtheme->buffer = pilot_buffer_create(newtheme->window);
-		pilot_color_t *shm_data = (pilot_color_t *)newtheme->buffer->shm_data;
-		for (i = 0; i < pilot_buffer_size(newtheme->buffer); i+=4) {
-			*shm_data = theme->bgcolor;
-			if (newtheme->window->opaque)
-				*shm_data |= 0xFF000000;
-			shm_data++;
-		}
+		newtheme->buffer = pilot_buffer_create((struct pilot_widget *)newtheme->window);
+		pilot_buffer_draw(newtheme->buffer, theme->bgcolor);
 	}
 
 	return newtheme;
@@ -66,14 +60,17 @@ pilot_theme_get_border(struct pilot_theme *theme)
 int
 pilot_theme_redraw_window(struct pilot_theme *theme)
 {
+	int ret = 0;
 	if (!theme->window)
-		return -1;
+		return 0;
 	if (theme->caption)
-		pilot_widget_redraw(theme->caption);
+		ret = pilot_widget_redraw(theme->caption);
 	if (theme->buffer)
 	{
+		ret +=1;
 		pilot_buffer_paint_window(theme->buffer, theme->window->common.window);
 	}
+	return ret;
 }
 
 int

@@ -1,3 +1,4 @@
+WLD=/usr/local
 PLATFORM=wayland
 HAVE_KEYBOARD=y
 HAVE_POINTER=y

@@ -1,6 +1,14 @@
-targets=test1 test1-2 test0
+subdirs:=src
 
-all: $(targets)
+all: $(subdirs)
 
-$(targets) clean:
-	make -C src $@
+$(subdirs): FORCE
+	make -C $@
+
+%: FORCE
+	$(foreach dir,$(subdirs), make -C $(dir) $@)
+
+clean:
+	$(foreach dir,$(subdirs), make -C $(dir) $@)
+
+FORCE: ;

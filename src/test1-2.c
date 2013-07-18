@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pilot_atk.h>
 #include <pilot_wtk.h>
 #include <linux/input.h>
+
+struct pilot_application *g_application;
 
 struct mycanvas_data
 {
@@ -71,7 +74,7 @@ mainwindow_init(struct pilot_window *mainwindow)
 {
 	struct pilot_canvas *canvas;
 	
-	canvas = pilot_canvas_create((struct pilot_widget *)mainwindow, WL_SHM_FORMAT_XRGB8888);
+	canvas = pilot_canvas_create((struct pilot_widget *)mainwindow, PILOT_DISPLAY_ARGB8888);
 	if (!canvas)
 		return -1;
 	canvas_data.canvas = canvas;
@@ -91,7 +94,7 @@ mainwindow_fini(struct pilot_window *mainwindow)
 int keypressed(struct pilot_widget *widget, pilot_key_t key)
 {
 	if (key == KEY_ESC)
-		pilot_display_exit(pilot_widget_display(widget), 0);
+		pilot_application_exit(g_application, 0);
 	else {
 		canvas_data.change+=16;
 		pilot_widget_redraw(widget);
@@ -129,7 +132,8 @@ int main(int argc, char **argv)
 	/**
 	 * Setup
 	 **/
-	display = pilot_display_create();
+	g_application = pilot_application_create(argc, argv);
+	display = pilot_display_create(g_application);
 
 	mainwindow = pilot_window_create((struct pilot_widget *)display, argv[0], 500, 500, NULL);
 	if (!mainwindow)
@@ -156,7 +160,7 @@ int main(int argc, char **argv)
 	/**
 	 * MainLoop
 	 **/
-	ret = pilot_display_mainloop(display);
+	ret = pilot_application_run(g_application);
 
 	/**
 	 * Cleanup
@@ -165,5 +169,6 @@ int main(int argc, char **argv)
 	pilot_window_destroy(window2);
 	pilot_window_destroy(mainwindow);
 	pilot_display_destroy(display);
+	pilot_application_destroy(g_application);
 	return ret;
 }
