@@ -154,7 +154,10 @@ _pilot_canvas_add_buffer(struct pilot_canvas *canvas)
 	for (i = 0; i< MAXBUFFERS; i++) if (canvas->buffers[i] == NULL) break;
 	if (i == MAXBUFFERS)
 		return -1;
-	buffer = pilot_buffer_create((struct pilot_widget *)canvas);
+	buffer = pilot_buffer_create((struct pilot_widget *)canvas,
+									canvas->common.region.w,
+									canvas->common.region.h,
+									canvas->common.format);
 
 	if (!buffer)
 		return -1;
