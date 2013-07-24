@@ -78,48 +78,6 @@ struct pilot_theme;
 	} while(0)
 #endif
 
-#define PILOT_DISPLAY_ARGB8888 0
-#define PILOT_DISPLAY_XRGB8888 1
-
-struct pilot_widget {
-	struct pilot_display *display;
-	struct pilot_window *window;
-	struct pilot_widget *parent;
-	_pilot_signal(pilot_widget, clicked, pilot_key_t key);
-	_pilot_signal(pilot_widget, scrolled, pilot_coord_t x, pilot_coord_t y);
-	_pilot_signal(pilot_widget, keyPressed, pilot_key_t key);
-	_pilot_signal(pilot_widget, focusChanged, pilot_bool_t in);
-	_pilot_signal(pilot_widget, xChanged, pilot_coord_t x);
-	_pilot_signal(pilot_widget, yChanged, pilot_coord_t y);
-	pilot_bitsfield_t is_display:1;
-	pilot_bitsfield_t hasfocus:1;
-	pilot_bitsfield_t hasmouse:1;
-	pilot_bitsfield_t hasclick:1;
-	pilot_length_t width, height;
-	pilot_coord_t x, y;
-	pilot_key_t key;
-	int format;
-	struct {
-		void (*destroy)(void *widget);
-		int (*redraw)(void *widget);
-		int (*resize)(void *widget, pilot_length_t width, pilot_length_t height);
-	} action;
-};
-
-#define PILOT_INPUT_KEYBOARD 0
-#define PILOT_INPUT_POINTER 1
-#define PILOT_INPUT_TOUCH 2
-struct pilot_input {
-	struct pilot_display *display;
-	pilot_key_t id;
-	_pilot_signal(pilot_display, keyChanged, pilot_key_t key, pilot_bool_t state);
-	_pilot_signal(pilot_display, mouseEntered, struct pilot_window *window, pilot_bool_t in);
-	_pilot_signal(pilot_display, mouse_scrolled, pilot_coord_t x, pilot_coord_t y);
-	_pilot_signal(pilot_display, mouse_clicked, pilot_key_t key, pilot_bool_t state);
-	_pilot_signal(pilot_display, mouse_moved, pilot_coord_t x, pilot_coord_t y);
-	void *platform;
-};
-
 #ifndef _pilot_list
 #define _pilot_list(type, name) struct _pilot_list_##type {\
 			struct type *item; \
@@ -148,6 +106,51 @@ struct pilot_input {
 			free(it); \
 		} while(0)
 #endif
+
+typedef enum
+{
+	PILOT_DISPLAY_ARGB8888,
+	PILOT_DISPLAY_XRGB8888
+} pilot_pixel_format_t;
+
+struct pilot_widget {
+	struct pilot_display *display;
+	struct pilot_window *window;
+	struct pilot_widget *parent;
+	_pilot_signal(pilot_widget, clicked, pilot_key_t key);
+	_pilot_signal(pilot_widget, scrolled, pilot_coord_t x, pilot_coord_t y);
+	_pilot_signal(pilot_widget, keyPressed, pilot_key_t key);
+	_pilot_signal(pilot_widget, focusChanged, pilot_bool_t in);
+	_pilot_signal(pilot_widget, xChanged, pilot_coord_t x);
+	_pilot_signal(pilot_widget, yChanged, pilot_coord_t y);
+	pilot_bitsfield_t is_display:1;
+	pilot_bitsfield_t hasfocus:1;
+	pilot_bitsfield_t hasmouse:1;
+	pilot_bitsfield_t hasclick:1;
+	pilot_rect_t region;
+	pilot_key_t key;
+	pilot_pixel_format_t format;
+	struct {
+		void (*destroy)(void *widget);
+		int (*show)(void *widget);
+		int (*redraw)(void *widget);
+		int (*resize)(void *widget, pilot_length_t width, pilot_length_t height);
+	} action;
+};
+
+#define PILOT_INPUT_KEYBOARD 0
+#define PILOT_INPUT_POINTER 1
+#define PILOT_INPUT_TOUCH 2
+struct pilot_input {
+	struct pilot_display *display;
+	pilot_key_t id;
+	_pilot_signal(pilot_display, keyChanged, pilot_key_t key, pilot_bool_t state);
+	_pilot_signal(pilot_display, mouseEntered, struct pilot_window *window, pilot_bool_t in);
+	_pilot_signal(pilot_display, mouse_scrolled, pilot_coord_t x, pilot_coord_t y);
+	_pilot_signal(pilot_display, mouse_clicked, pilot_key_t key, pilot_bool_t state);
+	_pilot_signal(pilot_display, mouse_moved, pilot_coord_t x, pilot_coord_t y);
+	void *platform;
+};
 
 struct pilot_display {
 	struct pilot_widget common;
@@ -185,6 +188,7 @@ struct pilot_theme {
 	struct pilot_widget *caption;
 	pilot_length_t border;
 	pilot_color_t bgcolor;
+	pilot_bitsfield_t changed:1;
 	void *platform;
 };
 
@@ -218,9 +222,15 @@ struct pilot_canvas
 struct pilot_buffer {
 	struct pilot_widget *parent;
 	uint32_t size;
+	uint32_t stride;
+	pilot_length_t width;
+	pilot_length_t height;
 	void *shm_data;
+	pilot_pixel_format_t format;
+	pilot_rect_t region;
 	pilot_bool_t busy:1;
 	pilot_bool_t ready:1;
+	pilot_bool_t regionning:1;
 	_pilot_mutex(lock);
 	_pilot_cond(cond);
 	void *platform;
@@ -244,7 +254,11 @@ pilot_widget_destroy(struct pilot_widget *widget);
 int
 pilot_widget_init(struct pilot_widget *widget, struct pilot_widget *parent);
 int
+pilot_widget_show(struct pilot_widget *widget);
+int
 pilot_widget_redraw(struct pilot_widget *widget);
+int
+pilot_widget_resize(struct pilot_widget *widget, pilot_length_t width, pilot_length_t height);
 int
 pilot_widget_size(struct pilot_widget *widget, pilot_length_t *width, pilot_length_t *height);
 void
@@ -358,6 +372,13 @@ void
 pilot_buffer_unlock(struct pilot_buffer *buffer);
 void
 pilot_buffer_release(struct pilot_buffer *buffer);
+	/**
+	 * pilot_buffer drawing API
+	 */
+	int
+	pilot_buffer_set_region(struct pilot_buffer *buffer, pilot_rect_t *rect);
+	int
+	pilot_buffer_fill(struct pilot_buffer *buffer, pilot_color_t color);
 #ifndef HAVE_INLINE
 uint32_t
 pilot_buffer_size(struct pilot_buffer *buffer);
@@ -379,7 +400,7 @@ pilot_buffer_ready(struct pilot_buffer *buffer){return buffer->ready;}
 struct pilot_theme *
 pilot_theme_create(struct pilot_display *display);
 struct pilot_theme *
-pilot_theme_duplicate(struct pilot_theme *theme);
+pilot_theme_attach(struct pilot_theme *theme, struct pilot_window *window);
 void
 pilot_theme_destroy(struct pilot_theme *theme);
 struct pilot_widget *

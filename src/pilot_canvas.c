@@ -23,8 +23,6 @@ pilot_canvas_create(struct pilot_widget *parent, int format)
 	canvas = malloc(sizeof *canvas);
 	memset(canvas, 0, sizeof(*canvas));
 	pilot_widget_init(&canvas->common, parent);
-	canvas->common.width = parent->width;
-	canvas->common.height = parent->height;
 	canvas->common.action.redraw = _pilot_canvas_redraw;
 	canvas->common.action.resize = _pilot_canvas_resize;
 	canvas->common.action.destroy = _pilot_canvas_destroy;
@@ -46,14 +44,9 @@ pilot_canvas_create(struct pilot_widget *parent, int format)
 static void
 _pilot_canvas_destroy(void *widget)
 {
-	struct pilot_canvas *canvas = widget;
-	pilot_canvas_destroy(canvas);
-}
-
-void
-pilot_canvas_destroy(struct pilot_canvas *canvas)
-{
 	int i;
+	struct pilot_canvas *canvas = widget;
+
 	mutex_destroy(canvas->paintmutex);
 	for (i = 0; i < MAXBUFFERS; i++)
 		if (canvas->buffers[i]) {
@@ -62,6 +55,12 @@ pilot_canvas_destroy(struct pilot_canvas *canvas)
 		}
 
 	free(canvas);
+}
+
+void
+pilot_canvas_destroy(struct pilot_canvas *canvas)
+{
+	_pilot_canvas_destroy(canvas);
 }
 
 int
@@ -125,10 +124,10 @@ _pilot_canvas_redraw(void *widget)
 	i = (canvas->onscreenid + 1) & 0x1;
 	buffer = canvas->buffers[i];
 	if (buffer && !pilot_buffer_busy(buffer)) {
-		if (canvas->draw_handler)
+		if (canvas->draw_handler) {
 			ret = canvas->draw_handler(canvas->draw_data, buffer->shm_data);
-		else
-			ret = pilot_buffer_ready(buffer);
+		} else
+			ret = pilot_buffer_ready(buffer)? 1:0;
 		LOG_DEBUG("ret %d",ret);
 		if (ret) {
 			pilot_buffer_paint_window(buffer, window);	

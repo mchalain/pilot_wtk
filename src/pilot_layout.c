@@ -27,8 +27,6 @@ pilot_layout_create(struct pilot_widget *parent)
 	layout = malloc(sizeof *layout);
 	memset(layout, 0, sizeof(*layout));
 	pilot_widget_init(&layout->common, parent);
-	layout->common.width = parent->width;
-	layout->common.height = parent->height;
 	layout->common.action.redraw = _pilot_layout_redraw;
 	layout->common.action.resize = _pilot_layout_resize;
 	layout->common.action.destroy = _pilot_layout_destroy;

@@ -33,6 +33,7 @@ pilot_widget_init(struct pilot_widget *widget, struct pilot_widget *parent)
 	if (parent) {
 		widget->window = parent->window;
 		widget->display = parent->display;
+		pilot_rect_copy(&widget->region, &parent->region);
 	}
 	widget->parent = parent;
 	return 0;
@@ -41,17 +42,39 @@ pilot_widget_init(struct pilot_widget *widget, struct pilot_widget *parent)
 int
 pilot_widget_size(struct pilot_widget *widget, uint32_t *width, uint32_t *height)
 {
-	*width = widget->width;
-	*height = widget->height;
+	*width = widget->region.w;
+	*height = widget->region.h;
 	return 0;
+}
+
+int
+pilot_widget_show(struct pilot_widget *widget)
+{
+	int ret = 0;
+	if (widget->action.show)
+		ret = widget->action.show((void *)widget);
+	return ret;
 }
 
 int
 pilot_widget_redraw(struct pilot_widget *widget)
 {
 	int ret = 0;
-	if (widget->action.redraw)
+	if (widget->action.redraw) {
 		ret = widget->action.redraw((void *)widget);
+		LOG_DEBUG("ret %d", ret);
+	}
+	return ret;
+}
+
+int
+pilot_widget_resize(struct pilot_widget *widget, pilot_length_t width, pilot_length_t height)
+{
+	int ret = 0;
+	if (widget->action.resize) {
+		ret = widget->action.resize((void *)widget, width, height);
+		LOG_DEBUG("ret %d", ret);
+	}
 	return ret;
 }
 
