@@ -68,6 +68,8 @@ int
 pilot_application_addconnector(struct pilot_application *application,
 						struct pilot_connector *connector);
 int
+pilot_application_check(struct pilot_application *application);
+int
 pilot_application_dispatchevents(struct pilot_application *application);
 int
 pilot_application_run(struct pilot_application *application);
