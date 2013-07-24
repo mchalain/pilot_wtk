@@ -361,7 +361,10 @@ pilot_canvas_unlock(struct pilot_canvas *canvas);
  * pilot_buffer API
  * **/
 struct pilot_buffer *
-pilot_buffer_create(struct pilot_widget *widget);
+pilot_buffer_create(struct pilot_widget *widget,
+				pilot_length_t width,
+				pilot_length_t height,
+				pilot_pixel_format_t pixel);
 void
 pilot_buffer_destroy(struct pilot_buffer *buffer);
 void

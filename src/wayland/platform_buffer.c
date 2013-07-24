@@ -21,9 +21,9 @@ _platform_buffer_create(struct pilot_buffer *buffer, struct pilot_widget *widget
 
 	pool = wl_shm_create_pool(pl_display->shm, fd, buffer->size);
 	platform->buffer = wl_shm_pool_create_buffer(pool, 0,
-						   widget->width, widget->height,
-						   widget->width * SHM_FORMAT_SIZE(widget->format),
-						   widget->format);
+						   buffer->width, buffer->height,
+						   buffer->stride,
+						   buffer->format);
 	wl_buffer_add_listener(platform->buffer, &_st_buffer_listener, buffer);
 	buffer->platform = platform;
 	wl_shm_pool_destroy(pool);
@@ -40,11 +40,14 @@ _platform_buffer_destroy(struct pilot_buffer *buffer)
 }
 
 static void
-_platform_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window)
+_platform_buffer_paint_window(struct pilot_buffer *buffer, 
+					struct pilot_window *window)
 {
 	struct platform_buffer *platform = buffer->platform;
 	struct platform_window *pl_window = window->platform;
 	struct wl_surface *surface = pl_window->surface;
-	wl_surface_attach(surface, platform->buffer, buffer->parent->x, buffer->parent->y);
+	LOG_DEBUG(" at %d x %d", buffer->parent->region.x, buffer->parent->region.y);
+	wl_surface_attach(surface, platform->buffer, 0, 0);
+	//wl_surface_attach(surface, platform->buffer, buffer->parent->region.x, buffer->parent->region.y);
 }
 

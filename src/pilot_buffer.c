@@ -17,7 +17,10 @@ static void
 _platform_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window);
 
 struct pilot_buffer *
-pilot_buffer_create(struct pilot_widget *parent)
+pilot_buffer_create(struct pilot_widget *parent,
+				pilot_length_t width,
+				pilot_length_t height,
+				pilot_pixel_format_t format)
 {
 	struct pilot_buffer *buffer;
 	int fd, pixel;
@@ -30,8 +33,12 @@ pilot_buffer_create(struct pilot_widget *parent)
 
 	buffer->parent = parent;
 
-	pixel = SHM_FORMAT_SIZE(parent->format);
-	buffer->size = parent->width * parent->height * pixel;
+	pixel = SHM_FORMAT_SIZE(format);
+	buffer->format = format;
+	buffer->width = width;
+	buffer->height = height;
+	buffer->stride = width * pixel;
+	buffer->size =  height * buffer->stride;
 
 	fd = os_create_anonymous_file(buffer->size);
 	if (fd < 0) {
@@ -70,11 +77,34 @@ pilot_buffer_destroy(struct pilot_buffer *buffer)
 }
 
 int
-pilot_buffer_draw(struct pilot_buffer *buffer, pilot_color_t color)
+pilot_buffer_set_region(struct pilot_buffer *buffer, pilot_rect_t *rect)
+{
+	if (rect) {
+		memcpy(&buffer->region,rect, sizeof buffer->region);
+		buffer->regionning = 1;
+	} else {
+		buffer->regionning = 0;
+	}
+	return 0;
+}
+
+int
+pilot_buffer_fill(struct pilot_buffer *buffer, pilot_color_t color)
 {
 	int ret;
 	// paint the padding
-	ret = colorset((void *)buffer->shm_data, color, buffer->size)? 1: 0;
+	if (!buffer->regionning) {
+		ret = colorset(buffer->shm_data, color, buffer->size)? 1: 0;
+	} else {
+		int i;
+		uint32_t height = buffer->region.y + buffer->region.h;
+		uint32_t stride = buffer->region.w * SHM_FORMAT_SIZE(buffer->format);
+		void * shmem = buffer->shm_data + buffer->region.x * SHM_FORMAT_SIZE(buffer->format);
+		for (i = buffer->region.y; i < height; i ++, shmem += buffer->stride) {
+			ret = colorset(shmem, color, stride)? 1: 0;
+			if (!ret) break;
+		}
+	}
 	return ret;
 }
 
