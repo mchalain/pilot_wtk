@@ -40,6 +40,7 @@ struct pilot_connector
 {
 	pilot_object_t *parent;
 	int fd;
+	pilot_bool_t distribut;
 	struct {
 		int (*prepare_wait)(void *);
 		int (*dispatch_events)(void *);

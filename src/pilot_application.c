@@ -54,9 +54,19 @@ _pilot_application_check_fdset(struct pilot_application *application,
 							struct pilot_connector *connector)
 {
 	if (FD_ISSET(connector->fd, &application->rfds)) {
-		if (connector->action.dispatch_events)
-			connector->action.dispatch_events(connector->parent);
+		connector->distribut = 1;
 	}
+	return 0;
+}
+
+static int
+_pilot_application_dispatch_item_events(struct pilot_application *application,
+							struct pilot_connector *connector)
+{
+	if (connector->distribut && connector->action.dispatch_events) {
+		connector->action.dispatch_events(connector->parent);
+	}
+	connector->distribut = 0;
 	return 0;
 }
 
@@ -64,7 +74,7 @@ int
 pilot_application_dispatchevents(struct pilot_application *application)
 {
 	pilot_list_foreach(application->connectors, 
-			_pilot_application_check_fdset, application);
+			_pilot_application_dispatch_item_events, application);
 	return 0;
 }
 
@@ -80,17 +90,30 @@ _pilot_application_fill_fdset(struct pilot_application *application,
 }
 
 int
+pilot_application_check(struct pilot_application *application)
+{
+	int ret = 0;
+	FD_ZERO(&application->rfds);
+	pilot_list_foreach(application->connectors,
+			_pilot_application_fill_fdset, application);
+
+	ret = select(application->maxfd, &application->rfds, NULL, NULL, NULL);
+	if (ret > 0)
+		pilot_list_foreach(application->connectors,
+			_pilot_application_check_fdset, application);
+	return ret;
+}
+
+int
 pilot_application_run(struct pilot_application *application)
 {
 	int ret = 0;
 
 	application->running = 1;
 	while (application->running && ret != -1) {
-		FD_ZERO(&application->rfds);
-		pilot_list_foreach(application->connectors, 
-				_pilot_application_fill_fdset, application);
-
-		ret = select(application->maxfd, &application->rfds, NULL, NULL, NULL);
+		ret = pilot_application_check(application);
+		if (ret >=0)
+			ret = pilot_application_dispatchevents(application);
 
 		if (ret == -1 && errno == EINTR) {
 			ret = 0;
