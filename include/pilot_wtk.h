@@ -10,15 +10,7 @@
 #define MAXSIGNALS 4
 #define MAXSLOTS 4
 
-#ifndef memset32
-inline int memset32(void *s, uint32_t ll, uint32_t l);
-#endif
-#ifndef memset16
-inline int memset16(void *s, uint16_t ll, uint32_t l);
-#endif
-
-#define LOG_DEBUG(format,...) fprintf(stderr, format"\n", __VA_ARGS__);
-
+#include "pilot_log.h"
 struct pilot_application;
 struct pilot_window;
 struct pilot_eglcanvas;

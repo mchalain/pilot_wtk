@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "pilot_types.h"
+#include "pilot_log.h"
 
 typedef void pilot_object_t;
 
