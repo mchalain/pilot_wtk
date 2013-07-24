@@ -58,7 +58,7 @@ pilot_widget_redraw(struct pilot_widget *widget)
 static int
 _pilot_widget_keysend(struct pilot_widget *widget, pilot_key_t key, pilot_bool_t state)
 {
-	LOG_DEBUG("%s", __FUNCTION__);
+	LOG_DEBUG("");
 	if (state)
 		widget->key = key;
 	else {
@@ -72,16 +72,18 @@ _pilot_widget_keysend(struct pilot_widget *widget, pilot_key_t key, pilot_bool_t
 static int
 _pilot_widget_installgrab(struct pilot_widget *widget, struct pilot_input *input)
 {
-	LOG_DEBUG("%s %p %d", __FUNCTION__, input, input->id);
-	if (input && input->id == PILOT_INPUT_KEYBOARD)
+	LOG_DEBUG("%p %d", input, input->id);
+	if (input && input->id == PILOT_INPUT_KEYBOARD) {
+		LOG_DEBUG("connect keyChanged %p => %p", input, widget);
 		pilot_connect(input, keyChanged, widget, _pilot_widget_keysend);
+	}
 	return 0;
 }
 
 static int
 _pilot_widget_uninstallgrab(struct pilot_widget *widget, struct pilot_input *input)
 {
-	LOG_DEBUG("%s %p %d", __FUNCTION__, input, input->id);
+	LOG_DEBUG("%p %d", input, input->id);
 	if (input && input->id == PILOT_INPUT_KEYBOARD)
 		pilot_disconnect(input, keyChanged, widget, _pilot_widget_keysend);
 	return 0;
@@ -92,9 +94,10 @@ pilot_widget_grabkeys(struct pilot_widget *widget, pilot_bool_t yes)
 {
 	if (yes) {
 		pilot_list_foreach(widget->display->inputs, _pilot_widget_installgrab, widget);
+		LOG_DEBUG("connect inputChanged ");
 		pilot_connect(widget->display, inputChanged, widget, _pilot_widget_installgrab);
 	} else {
-		LOG_DEBUG("%s disconnect inputChanged ", __FUNCTION__);
+		LOG_DEBUG("disconnect inputChanged ");
 		pilot_list_foreach(widget->display->inputs, _pilot_widget_uninstallgrab, widget);
 		pilot_disconnect(widget->display, inputChanged, widget, _pilot_widget_installgrab);
 	}

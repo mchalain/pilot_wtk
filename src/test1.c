@@ -156,13 +156,13 @@ int main(int argc, char **argv)
 		return -1;
 
 	pilot_display_add_window(display, mainwindow);
-	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	LOG_DEBUG("ret %d",ret);
 
 	struct pilot_widget *mainwidget = (struct pilot_widget *)mainwindow;
 	pilot_connect(mainwidget, focusChanged, mainwidget, main_window_focus);
 	pilot_connect(mainwidget, clicked, mainwidget, click);
 	pilot_window_show(mainwindow);
-	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	LOG_DEBUG("ret %d",ret);
 
 /*
 	mainwindow2 = pilot_window_create((struct pilot_widget *)display, "window2", 250, 250, NULL);
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	 * MainLoop
 	 **/
 	ret = pilot_application_run(g_application);
-	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	LOG_DEBUG("ret %d", ret);
 
 	/**
 	 * Cleanup

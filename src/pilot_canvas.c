@@ -90,7 +90,7 @@ pilot_canvas_lock(struct pilot_canvas *canvas, void **image)
 	i = canvas->offscreenid;
 	if (canvas->buffers[i])
 		ret = pilot_buffer_lock(canvas->buffers[i], image);
-	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	LOG_DEBUG("ret %d",ret);
 	return ret;
 }
 
@@ -101,7 +101,7 @@ pilot_canvas_unlock(struct pilot_canvas *canvas)
 	i = canvas->offscreenid;
 	if (canvas->buffers[i])
 		pilot_buffer_unlock(canvas->buffers[i]);
-	LOG_DEBUG("%s", __FUNCTION__);
+	LOG_DEBUG("");
 }
 
 int
@@ -129,7 +129,7 @@ _pilot_canvas_redraw(void *widget)
 			ret = canvas->draw_handler(canvas->draw_data, buffer->shm_data);
 		else
 			ret = pilot_buffer_ready(buffer);
-		LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+		LOG_DEBUG("ret %d",ret);
 		if (ret) {
 			pilot_buffer_paint_window(buffer, window);	
 			canvas->onscreenid = i;

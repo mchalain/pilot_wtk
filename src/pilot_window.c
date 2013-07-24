@@ -31,6 +31,10 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 		return NULL;
 	memset(window, 0, sizeof(*window));
 
+	if (parent == NULL) {
+		LOG_ERROR("parent must be defined");
+		exit(-1); 
+	}
 	pilot_widget_init(&window->common, parent);
 	if (parent->is_display) {
 		window->common.window = window;
@@ -161,7 +165,7 @@ _pilot_window_redraw(void *widget)
 	if (window->layout) {
 		ret += pilot_widget_redraw(window->layout);
 	}
-	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+	LOG_DEBUG("ret %d",ret);
 	if (ret && window->is_mainwindow)
 		return _platform_window_flush(window);
 	return ret;

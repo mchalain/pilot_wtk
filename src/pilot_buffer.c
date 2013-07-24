@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <pilot_atk.h>
 #include <pilot_wtk.h>
+#include <pilot_utk.h>
 
 #define SHM_FORMAT_SIZE(format)	_s_shm_format_size[format]
 static int _s_shm_format_size[] = { 4, 4};
@@ -33,14 +35,14 @@ pilot_buffer_create(struct pilot_widget *parent)
 
 	fd = os_create_anonymous_file(buffer->size);
 	if (fd < 0) {
-		fprintf(stderr, "creating a buffer file for %d B failed: %m\n",
+		LOG_ERROR("creating a buffer file for %d B failed: %m\n",
 			buffer->size);
 		return NULL;
 	}
 
 	data = mmap(NULL, buffer->size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (data == MAP_FAILED) {
-		fprintf(stderr, "mmap failed: %m\n");
+		LOG_ERROR("mmap failed: %m\n");
 		close(fd);
 		return NULL;
 	}
@@ -79,7 +81,7 @@ pilot_buffer_draw(struct pilot_buffer *buffer, pilot_color_t color)
 void
 pilot_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window)
 {
-	LOG_DEBUG("%s", __FUNCTION__);
+	LOG_DEBUG("");
 	if (! mutex_lock(buffer->lock)) {
 		_platform_buffer_paint_window(buffer, window);
 		buffer->busy=1;
@@ -93,10 +95,8 @@ pilot_buffer_lock(struct pilot_buffer *buffer, void **image)
 {
 	int ret;
 	if (!(ret = mutex_lock(buffer->lock))) {
-	//if (!(ret =!(buffer->lock = (!(buffer->lock))? 1 : 0))) {
-		LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
 		while ( buffer->busy || buffer->ready) {
-	LOG_DEBUG("%s ret %d", __FUNCTION__,ret);
+			LOG_DEBUG("ret %d",ret);
 			ret = cond_wait(buffer->cond, buffer->lock);
 			if (ret)
 				break;

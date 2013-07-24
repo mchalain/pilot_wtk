@@ -5,8 +5,6 @@
 #include <pilot_wtk.h>
 #include <pilot_atk.h>
 
-#define LOG_DEBUG(format,...) fprintf(stderr, format"\n", __VA_ARGS__);
-
 static int running = 0;
 static int
 _platform_display_create(struct pilot_display *display,
@@ -39,6 +37,7 @@ pilot_display_create(struct pilot_application *application)
 	struct pilot_connector *connector = 
 		pilot_connector_create(display);
 	if (_platform_display_create(display, connector) < 0) {
+		LOG_ERROR("platform not available");
 		free(display);
 		return NULL;
 	}
@@ -66,7 +65,7 @@ pilot_display_add_window(struct pilot_display *display, struct pilot_window *win
 int
 pilot_display_add_input(struct pilot_display *display, struct pilot_input *input)
 {
-	LOG_DEBUG("%s", __FUNCTION__);
+	LOG_DEBUG("");
 	pilot_list_append(display->inputs, input);
 	pilot_emit(display, inputChanged, input);
 	return 0;

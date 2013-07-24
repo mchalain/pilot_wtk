@@ -42,7 +42,7 @@ keyboard_handle_key(void *data, struct wl_keyboard *keyboard,
 		    uint32_t state)
 {
 	struct pilot_input *input = (struct pilot_input *)data;
-
+	LOG_DEBUG("key 0x%X %p", key, input);
 	pilot_emit(input,keyChanged, key, state);
 }
 

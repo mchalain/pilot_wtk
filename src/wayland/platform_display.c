@@ -91,6 +91,7 @@ _platform_display_create(struct pilot_display *display,
 	
 	platform->display = wl_display_connect(NULL);
 	if (!platform->display) {
+		LOG_ERROR("display not found");
 		return -1;
 	}
 
@@ -100,14 +101,14 @@ _platform_display_create(struct pilot_display *display,
 	wl_display_roundtrip(platform->display);
 
 	if (platform->shm == NULL) {
-		fprintf(stderr, "No wl_shm global\n");
+		LOG_ERROR("no wl_shm global");
 		return -1;
 	}
 
 	wl_display_roundtrip(platform->display);
 
 	if (!(display->formats & (1 << WL_SHM_FORMAT_XRGB8888))) {
-		fprintf(stderr, "WL_SHM_FORMAT_XRGB32 not available\n");
+		LOG_ERROR("WL_SHM_FORMAT_XRGB32 not available");
 		return -1;
 	}
 
