@@ -39,4 +39,14 @@ typedef pthread_cond_t pilot_cond_t;
 #define cond_destroy(cond) pthread_mutex_destroy(&cond)
 
 #endif
+
+struct pilot_rect
+{
+	pilot_coord_t x;
+	pilot_coord_t y;
+	pilot_length_t w;
+	pilot_length_t h;
+};
+typedef struct pilot_rect pilot_rect_t;
+#define pilot_rect_copy(dest, src) do { memcpy(dest, src, sizeof(struct pilot_rect)); } while(0)
 #endif
