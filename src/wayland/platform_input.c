@@ -18,7 +18,7 @@ _platform_input_create(struct pilot_input *input, struct pilot_display *display,
 		platform->pointer = wl_seat_get_pointer(platform->seat);
 		wl_pointer_add_listener(platform->pointer, &_st_pointer_listener, input);
 	}
-	if (id == PILOT_INPUT_POINTER) {
+	if (id == PILOT_INPUT_KEYBOARD) {
 		platform->keyboard = wl_seat_get_keyboard(platform->seat);
 		wl_keyboard_add_listener(platform->keyboard, &_st_keyboard_listener, input);
 	}
