@@ -5,13 +5,13 @@ cmd = $(echo-cmd) $(cmd_$(1))
 
 quiet_cmd_cc_o_c=CC $*
  cmd_cc_o_c=$(Q)$(CC) $(CFLAGS) -c -o $@ $<
-quiet_cmd_ld_bin=LD $@
+quiet_cmd_ld_bin=LD $*
  cmd_ld_bin=$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBRARY)
-quiet_cmd_ld_slib=LD $@
+quiet_cmd_ld_slib=LD $*
  cmd_ld_slib=$(RM) $@ && \
 	$(AR) -cvq $@ $^ > /dev/null && \
 	$(RANLIB) $@
-quiet_cmd_ld_dlib=LD $@
+quiet_cmd_ld_dlib=LD $*
  cmd_ld_dlib=$(Q)$(LD) -shared -Wl,-soname,$@ -o $@ $^ $(LIBRARY)
 
 $(obj)/%.o:$(src)/%.c
