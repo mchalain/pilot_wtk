@@ -45,15 +45,11 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 	window->opaque = 1;
 	window->fullwidth = width;
 	window->fullheight = height;
-	window->common.width = width;
-	window->common.height = height;
 	if (theme) {
-		theme->window = window;
-		window->theme = pilot_theme_duplicate(theme);
-		pilot_theme_resize_window(window->theme, &width, &height);
+		window->theme = pilot_theme_attach(theme, window);
 	}
-	window->common.width = width;
-	window->common.height = height;
+	LOG_DEBUG("rect %d x %d", width, height);
+	window->opaque = 1;
 
 	window->common.action.redraw = _pilot_window_redraw;
 	window->common.action.resize = _pilot_window_resize;
@@ -99,7 +95,13 @@ pilot_window_show(struct pilot_window *window)
 {
 	int ret;
 	/*TODO*/
-	ret = _pilot_window_redraw(window);
+	if (window->theme) {
+		ret = pilot_theme_redraw_window(window->theme);
+	}
+	if (window->layout) {
+		ret += pilot_widget_show(window->layout);
+	}
+	ret += _pilot_window_redraw(window);
 	if (ret >= 0) ret = 0;
 	return ret;
 }
@@ -126,8 +128,12 @@ pilot_window_focus(struct pilot_window *window)
 int
 pilot_window_set_layout(struct pilot_window *window, struct pilot_widget *layout)
 {
-	if (!window->layout)
+	if (!window->layout) {
 		window->layout = layout;
+		pilot_widget_resize((struct pilot_widget *)window->layout,
+						window->common.region.w,
+						window->common.region.h);
+	}
 	return -(!(window->layout == layout));
 }
 
@@ -142,8 +148,7 @@ pilot_window_layout(struct pilot_window *window)
 int
 pilot_window_resize(struct pilot_window *window, uint32_t width, uint32_t height)
 {
-	window->common.width = width;
-	window->common.height = height;
+	_pilot_window_resize(window, width, height);
 	return 0;
 }
 
@@ -174,19 +179,26 @@ _pilot_window_redraw(void *widget)
 static int
 _pilot_window_resize(void *widget, uint32_t width, uint32_t height)
 {
+	int ret = 0;
 	struct pilot_window *window = widget;
 
 	window->fullwidth = width;
 	window->fullheight = height;
-	if (window->theme)
-		pilot_theme_resize_window(window->theme, &width, &height);
+	if (window->theme) {
+		struct pilot_theme *theme = window->theme;
+		pilot_theme_attach(theme, window);
+		pilot_theme_destroy(theme);
+	} else {
+		window->common.region.w = width;
+		window->common.region.h = height;
+	}
 	if (window->layout && window->layout->action.resize)
-		window->layout->action.resize(window->layout, width, height);
+		ret = window->layout->action.resize(window->layout, 
+						window->common.region.w,
+						window->common.region.h);
+	LOG_DEBUG("ret %d",ret);
 
-	window->common.width = width;
-	window->common.height = height;
-
-	return 0;
+	return ret;
 }
 
 #include "platform_window.c"

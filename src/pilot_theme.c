@@ -3,6 +3,10 @@
 #include <string.h>
 #include <pilot_wtk.h>
 
+static int
+_pilot_theme_resize_window(struct pilot_theme *theme,
+						pilot_rect_t *region);
+
 struct pilot_theme *
 pilot_theme_create(struct pilot_display *display)
 {
@@ -12,26 +16,39 @@ pilot_theme_create(struct pilot_display *display)
 	memset(theme, 0, sizeof(*theme));
 	theme->window = NULL;
 
-	theme->bgcolor = 0x0055A5AA;
+	theme->bgcolor = 0xFFFFFFFF;
 	theme->border = 2;
+	theme->changed = 1;
 	return theme;
 }
 
 struct pilot_theme *
-pilot_theme_duplicate(struct pilot_theme *theme)
+pilot_theme_attach(struct pilot_theme *theme, struct pilot_window *window)
 {
 	struct pilot_theme *newtheme;
 
 	newtheme = pilot_theme_create(NULL);
-	newtheme->window = theme->window;
+	newtheme->window = window;
 	newtheme->bgcolor = theme->bgcolor | (newtheme->window->opaque)? 0xFF000000: 0;
 	newtheme->border = theme->border;
 	
 	if (newtheme->window)
 	{
 		int i = 0;
-		newtheme->buffer = pilot_buffer_create((struct pilot_widget *)newtheme->window);
-		pilot_buffer_draw(newtheme->buffer, theme->bgcolor);
+		pilot_rect_t region;
+		newtheme->buffer = pilot_buffer_create((struct pilot_widget *)window,
+									window->fullwidth,
+									window->fullheight,
+									window->common.format);
+		region.x = window->common.region.x;
+		region.y = window->common.region.y;
+		region.w = window->fullwidth;
+		region.h = window->fullheight;
+		if (!_pilot_theme_resize_window(newtheme, &region)) {
+			pilot_rect_copy(&window->common.region, &region);
+		}
+		pilot_buffer_fill(newtheme->buffer, theme->bgcolor);
+		LOG_DEBUG("");
 	}
 
 	return newtheme;
@@ -63,30 +80,36 @@ pilot_theme_redraw_window(struct pilot_theme *theme)
 	int ret = 0;
 	if (!theme->window)
 		return 0;
-	if (theme->caption)
+	if (theme->caption && theme->changed)
 		ret = pilot_widget_redraw(theme->caption);
-	if (theme->buffer)
+	if (theme->buffer && theme->changed)
 	{
 		ret +=1;
+		LOG_DEBUG("");
 		pilot_buffer_paint_window(theme->buffer, theme->window->common.window);
 	}
+	theme->changed = 0;
 	return ret;
 }
 
-int
-pilot_theme_resize_window(struct pilot_theme *theme, pilot_length_t *width, pilot_length_t *height)
+static int
+_pilot_theme_resize_window(struct pilot_theme *theme,
+						pilot_rect_t *region)
 {
 	pilot_length_t decrement_height;
-	if (*width > theme->border * 2)
-		*width -= theme->border * 2;
-	else
+	if (region->w > theme->border * 2) {
+		region->w -= theme->border * 2;
+		region->x += theme->border;
+	} else
 		return -1;
-	decrement_height = theme->border * 2;
+	decrement_height = theme->border;
 	if (theme->caption)
-		decrement_height += theme->caption->height;
-	if (*height > decrement_height)
-		*height -= decrement_height;
-	else
+		decrement_height += theme->caption->region.h;
+	if (region->h > decrement_height + theme->border) {
+		region->h -= decrement_height + theme->border;
+		region->y += decrement_height;
+	} else
 		return -1;
+
 	return 0;
 }
