@@ -78,13 +78,20 @@ _platform_window_flush(struct pilot_window *window)
 		wl_region_add(region, 0, 0, window->fullwidth, window->fullheight);
 		wl_surface_set_opaque_region(platform->surface, region);
 		wl_region_destroy(region);
+		LOG_DEBUG("");
 	} else {
 		wl_surface_set_opaque_region(platform->surface, NULL);
 	}
 
-	wl_surface_damage(platform->surface, 0, 0, window->fullwidth, window->fullheight);
+	//wl_surface_damage(platform->surface, 0, 0, window->fullwidth, window->fullheight);
+	wl_surface_damage(platform->surface, window->common.region.x,
+								window->common.region.y, 
+								window->common.region.w,
+								window->common.region.h);
+
 	platform->callback = wl_surface_frame(platform->surface);
 	wl_callback_add_listener(platform->callback, &_st_frame_listener, window);
+
 	wl_surface_commit(platform->surface);
 	return 0;
 }
