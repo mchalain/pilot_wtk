@@ -1,14 +1,32 @@
-subdirs:=src
+obj=obj
+src=src
+srctree=.
 
-all: $(subdirs)
+bin-y=
+lib-y=
 
-$(subdirs): FORCE
-	make -C $@
+bin-ext=
+slib-ext=a
+dlib-ext=so
 
-%: FORCE
-	$(foreach dir,$(subdirs), make -C $(dir) $@)
+include ./config
+
+CFLAGS=-g -DDEBUG
+STATIC=1
+DYNAMIC=1
+TEST=1
+
+include $(src)/pilot_wtk.mk
+include $(src)/pilot_atk.mk
+include $(src)/pilot_utk.mk
+ifdef TEST
+include $(src)/test.mk
+endif
+
+include ./scripts.mk
 
 clean:
-	$(foreach dir,$(subdirs), make -C $(dir) $@)
+	$(RM) $(target-objs)
+distclean: clean
+	$(RM) $(lib-dynamic-target) $(lib-static-target)
 
-FORCE: ;
