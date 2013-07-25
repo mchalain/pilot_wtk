@@ -5,7 +5,7 @@ typedef int32_t pilot_coord_t;
 typedef uint32_t pilot_length_t;
 typedef uint32_t pilot_bitsfield_t;
 typedef uint32_t pilot_color_t;
-#define colorset	memset32;
+#define colorset	memset32
 typedef int16_t pilot_key_t;
 typedef char pilot_bool_t;
 #ifndef PTHREAD
