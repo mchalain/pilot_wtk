@@ -8,6 +8,7 @@ _platform_window_create(struct pilot_window *window, struct pilot_display *displ
 	struct platform_window *platform = malloc(sizeof(*platform));
 	struct platform_display *pl_display = display->platform;
 	
+	memset(platform, 0, sizeof *platform);
 	platform->callback = NULL;
 	platform->surface = wl_compositor_create_surface(pl_display->compositor);
 	platform->shell_surface = wl_shell_get_shell_surface(pl_display->shell,
@@ -21,7 +22,14 @@ _platform_window_create(struct pilot_window *window, struct pilot_display *displ
 		wl_shell_surface_set_title(platform->shell_surface, window->name);
 	wl_shell_surface_set_toplevel(platform->shell_surface);
 	window->platform = platform;
-	
+
+	if (window->opaque) {
+		struct platform_display *pl_display =
+									window->common.display->platform;
+		platform->region = wl_compositor_create_region(pl_display->compositor);
+		wl_region_add(platform->region, 0, 0, window->fullwidth, window->fullheight);
+	}
+
 	return 0;
 }
 
@@ -70,17 +78,10 @@ _platform_window_flush(struct pilot_window *window)
 {
 	struct platform_window *platform = window->platform;
 
-	if (window->opaque || window->fullscreen) {
-		struct wl_region *region;
-		struct platform_display *pl_display =
-									window->common.display->platform;
-		region = wl_compositor_create_region(pl_display->compositor);
-		wl_region_add(region, 0, 0, window->fullwidth, window->fullheight);
-		wl_surface_set_opaque_region(platform->surface, region);
-		wl_region_destroy(region);
-		LOG_DEBUG("");
-	} else {
-		wl_surface_set_opaque_region(platform->surface, NULL);
+	wl_surface_set_opaque_region(platform->surface, platform->region);
+	if (platform->region) {
+		wl_region_destroy(platform->region);
+		platform->region = NULL;
 	}
 
 	//wl_surface_damage(platform->surface, 0, 0, window->fullwidth, window->fullheight);

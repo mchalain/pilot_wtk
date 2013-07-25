@@ -19,6 +19,7 @@ struct platform_window {
 	struct wl_surface *surface;
 	struct wl_shell_surface *shell_surface;
 	struct wl_callback *callback;
+	struct wl_region *region;
 };
 
 struct platform_buffer {

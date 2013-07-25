@@ -29,6 +29,7 @@ mainwindow_fini(struct pilot_window *mainwindow)
 {
 }
 
+#define THEME_BORDER 20
 int main(int argc, char **argv)
 {
 	int ret = 0;
@@ -41,9 +42,9 @@ int main(int argc, char **argv)
 	 **/
 	g_application = pilot_application_create(argc, argv);
 	display = pilot_display_create(g_application);
-	//theme = pilot_theme_create(display);
+	theme = pilot_theme_create(display);
 	
-	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", PILOT_DISPLAY_WIDTH, PILOT_DISPLAY_HEIGHT, theme);
+	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", PILOT_DISPLAY_WIDTH + THEME_BORDER * 2, PILOT_DISPLAY_HEIGHT + THEME_BORDER * 2, theme);
 	if (!mainwindow)
 		return -1;
 	if (mainwindow_init(mainwindow) < 0)

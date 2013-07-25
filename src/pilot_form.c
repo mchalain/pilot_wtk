@@ -56,6 +56,8 @@ pilot_form_create(struct pilot_widget *parent, int id)
 			form->image = resources[i].image;
 			w = resources[i].region.w;
 			h = resources[i].region.h;
+	LOG_DEBUG("form %p", form);
+
 			pilot_widget_resize((struct pilot_widget *)form, w, h);
 			form->buffer = pilot_buffer_create((struct pilot_widget *)form,
 									w, h, PILOT_DISPLAY_ARGB8888);

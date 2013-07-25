@@ -50,6 +50,7 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 	window->common.region.y = 0;
 	window->common.region.w = width;
 	window->common.region.h = height;
+	LOG_DEBUG("rect %d x %d", width, height);
 	if (theme) {
 		window->theme = pilot_theme_attach(theme, window);
 	}
