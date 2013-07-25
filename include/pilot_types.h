@@ -24,6 +24,7 @@ typedef uint32_t pilot_cond_t;
 #define cond_destroy(cond) do {} while(0)
 
 #else
+#include <pthread.h>
 typedef pthread_mutex_t pilot_mutex_t;
 #define _pilot_mutex(mutex)	pthread_mutex_t mutex
 #define mutex_init(mutex, attr) pthread_mutex_init(&mutex, attr);
@@ -32,11 +33,11 @@ typedef pthread_mutex_t pilot_mutex_t;
 #define mutex_destroy(mutex) pthread_mutex_destroy(&mutex)
 
 typedef pthread_cond_t pilot_cond_t;
-#define _pilot_cond(cond)	pilot_cond_t pthread_cond_t
-#define cond_init(cond, ...) pthread_mutex_init(&cond, attr);
-#define cond_wait(cond, mutex)	pthread_mutex_wait(&cond, &mutex)
-#define cond_signal(cond) thread_mutex_signal(&cond)
-#define cond_destroy(cond) pthread_mutex_destroy(&cond)
+#define _pilot_cond(cond)	pthread_cond_t cond
+#define cond_init(cond, attr) pthread_cond_init(&cond, attr);
+#define cond_wait(cond, mutex)	pthread_cond_wait(&cond, &mutex)
+#define cond_signal(cond) pthread_cond_signal(&cond)
+#define cond_destroy(cond) pthread_cond_destroy(&cond)
 
 #endif
 

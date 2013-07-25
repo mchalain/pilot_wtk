@@ -75,7 +75,6 @@ static void
 _pilot_window_destroy(void *widget)
 {
 	struct pilot_window *window = widget;
-	mutex_destroy(&window->paintmutex);
 	if (window->theme)
 		pilot_theme_destroy(window->theme);
 	pilot_window_destroy(window);

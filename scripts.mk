@@ -10,21 +10,20 @@ cmd = $(echo-cmd) $(cmd_$(1))
 quiet_cmd_cc_o_c=CC $*
  cmd_cc_o_c=$(Q)$(CC) $(CFLAGS) -c -o $@ $<
 quiet_cmd_ld_bin=LD $*
- cmd_ld_bin=$(Q)$(LD) $(LDFLAGS) $($*_LDFLAGS) -o $@ $^ $(LIBRARY) $($*_LIBRARY:%=-l%)
+ cmd_ld_bin=$(Q)$(LD) $(LDFLAGS) $($*_LDFLAGS) -o $@ $^ $(LIBRARY:%=-l%) $($*_LIBRARY:%=-l%)
 quiet_cmd_ld_slib=LD $*
  cmd_ld_slib=$(RM) $@ && \
 	$(AR) -cvq $@ $^ > /dev/null && \
 	$(RANLIB) $@
 quiet_cmd_ld_dlib=LD $*
- cmd_ld_dlib=$(Q)$(LD) $(LDFLAGS) $($*_LDFLAGS) -shared -Wl,-soname,$@ -o $@ $^ $(LIBRARY) $($*_LIBRARY:%=-l%)
+ cmd_ld_dlib=$(Q)$(LD) $(LDFLAGS) $($*_LDFLAGS) -shared -Wl,-soname,$@ -o $@ $^ $(LIBRARY:%=-l%) $($*_LIBRARY:%=-l%)
 
 $(obj)/%.o:$(src)/%.c
 	@$(call cmd,cc_o_c)
 
 ifdef STATIC
 lib-static-target:=$(addprefix $(obj)/lib,$(addsuffix $(slib-ext:%=.%),$(lib-y)))
-endif
-ifdef DYNAMIC
+else
 lib-dynamic-target:=$(addprefix $(obj)/lib,$(addsuffix $(dlib-ext:%=.%),$(lib-y)))
 endif
 bin-target:=$(addprefix $(obj)/,$(addsuffix $(bin-ext:%=.%),$(bin-y)))

@@ -13,8 +13,14 @@ include ./config
 
 CFLAGS=-g -DDEBUG
 STATIC=
-DYNAMIC=1
 TEST=1
+PTHREAD=
+
+ifdef PTHREAD
+CFLAGS+=-DPTHREAD
+LDFLAGS+=-pthread
+LIBRARY+=pthread
+endif
 
 include $(src)/pilot_wtk.mk
 include $(src)/pilot_atk.mk
