@@ -69,6 +69,14 @@ int canvas_draw(void *draw_data, void *image)
 	return 1;
 }
 
+int canvas_draw_2(void *draw_data, void *image)
+{
+	struct mycanvas_data *data = draw_data;
+	canvas_data.change += 16;
+	canvas_draw(draw_data, image);
+	return 1;
+}
+
 int
 mainwindow_init(struct pilot_window *mainwindow)
 {
@@ -81,7 +89,7 @@ mainwindow_init(struct pilot_window *mainwindow)
 	canvas_data.window = mainwindow;
 	canvas_data.change = 0;
 
-	//pilot_canvas_set_draw_handler(canvas, canvas_draw, &canvas_data);
+	pilot_canvas_set_draw_handler(canvas, canvas_draw_2, &canvas_data);
 	pilot_window_set_layout(mainwindow, (struct pilot_widget*)canvas);
 	void *image;
 	if (!pilot_canvas_lock(canvas_data.canvas, &image)) {
@@ -147,7 +155,7 @@ int main(int argc, char **argv)
 	 **/
 	g_application = pilot_application_create(argc, argv);
 	display = pilot_display_create(g_application);
-	//theme = pilot_theme_create(display);
+	theme = pilot_theme_create(display);
 	
 	mainwindow = pilot_window_create((struct pilot_widget *)display, "mainwindow", 250, 250, theme);
 	if (!mainwindow)

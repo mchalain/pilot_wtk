@@ -45,6 +45,10 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 	window->opaque = 1;
 	window->fullwidth = width;
 	window->fullheight = height;
+	window->common.region.x = 0;
+	window->common.region.y = 0;
+	window->common.region.w = width;
+	window->common.region.h = height;
 	if (theme) {
 		window->theme = pilot_theme_attach(theme, window);
 	}
@@ -101,6 +105,7 @@ pilot_window_show(struct pilot_window *window)
 	if (window->layout) {
 		ret += pilot_widget_show(window->layout);
 	}
+	LOG_DEBUG("layout %p", window->layout);
 	ret += _pilot_window_redraw(window);
 	if (ret >= 0) ret = 0;
 	return ret;

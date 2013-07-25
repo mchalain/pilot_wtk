@@ -86,7 +86,7 @@ pilot_theme_redraw_window(struct pilot_theme *theme)
 	{
 		ret +=1;
 		LOG_DEBUG("");
-		pilot_buffer_paint_window(theme->buffer, theme->window->common.window);
+		pilot_buffer_paint_window(theme->buffer, theme->window);
 	}
 	theme->changed = 0;
 	return ret;
