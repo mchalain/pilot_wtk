@@ -244,6 +244,29 @@ struct pilot_eglcanvas
 	void *platform;
 };
 #endif
+
+#define PILOT_RESOURCE_FORM 1
+#define PILOT_RESOURCE_BUTTON 2
+#define PILOT_RESOURCE_INPUT 3
+#define PILOT_RESOURCE_SELECT 4
+struct pilot_resource
+{
+	uint8_t type;
+	uint8_t id;
+	uint16_t unused;
+	pilot_rect_t region;
+	pilot_color_t *image;
+};
+
+struct pilot_form
+{
+	struct pilot_widget common;
+	struct pilot_buffer *buffer;
+	pilot_bool_t redraw;
+	pilot_color_t *image;
+	pilot_color_t *mask;
+};
+
 /**
  * pilot_widget API
  * **/
@@ -415,5 +438,9 @@ pilot_theme_redraw_window(struct pilot_theme *theme);
 int
 pilot_theme_resize_window(struct pilot_theme *theme, pilot_length_t *width, pilot_length_t *height);
 
+struct pilot_form *
+pilot_form_create(struct pilot_widget *parent, int id);
+void
+pilot_form_destroy(struct pilot_form *form);
 
 #endif
