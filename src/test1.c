@@ -64,17 +64,11 @@ int canvas_draw(void *draw_data, void *image)
 {
 	struct mycanvas_data *data = draw_data;
 	uint32_t w, h;
+	int change = data->change;
+	data->change += 16;
 	pilot_widget_size((struct pilot_widget *)data->window, &w, &h);
 	paint_pixels(image, 20, w, h, data->change);
-	return 1;
-}
-
-int canvas_draw_2(void *draw_data, void *image)
-{
-	struct mycanvas_data *data = draw_data;
-	canvas_data.change += 16;
-	canvas_draw(draw_data, image);
-	return 1;
+	return (change != data->change);
 }
 
 int
@@ -89,7 +83,7 @@ mainwindow_init(struct pilot_window *mainwindow)
 	canvas_data.window = mainwindow;
 	canvas_data.change = 0;
 
-	pilot_canvas_set_draw_handler(canvas, canvas_draw_2, &canvas_data);
+	pilot_canvas_set_draw_handler(canvas, canvas_draw, &canvas_data);
 	pilot_window_set_layout(mainwindow, (struct pilot_widget*)canvas);
 	void *image;
 	if (!pilot_canvas_lock(canvas_data.canvas, &image)) {
@@ -109,16 +103,6 @@ int keypressed(struct pilot_widget *widget, pilot_key_t key)
 {
 	if (key == KEY_ESC)
 		pilot_application_exit(g_application, 0);
-	else {
-		canvas_data.change+=16;
-		void *image;
-		if (!pilot_canvas_lock(canvas_data.canvas, &image)) {
-			canvas_draw(&canvas_data, image);
-			pilot_canvas_unlock(canvas_data.canvas);
-			pilot_canvas_flip(canvas_data.canvas);
-		}
-		pilot_widget_redraw(widget);
-	}
 	return 0;
 }
 int click(struct pilot_widget *widget, pilot_key_t key)

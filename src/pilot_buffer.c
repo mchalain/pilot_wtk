@@ -94,14 +94,14 @@ pilot_buffer_fill(struct pilot_buffer *buffer, pilot_color_t color)
 	int ret;
 	// paint the padding
 	if (!buffer->regionning) {
-		ret = colorset(buffer->shm_data, color, buffer->size)? 1: 0;
+		ret = colorset(buffer->shm_data, color, buffer->width * buffer->height);
+		ret = ret?1:0;
 	} else {
 		int i;
 		uint32_t height = buffer->region.y + buffer->region.h;
-		uint32_t stride = buffer->region.w * SHM_FORMAT_SIZE(buffer->format);
-		void * shmem = buffer->shm_data + buffer->region.x * SHM_FORMAT_SIZE(buffer->format);
+		pilot_color_t * shmem = ((pilot_color_t *)buffer->shm_data) + buffer->region.x;
 		for (i = buffer->region.y; i < height; i ++, shmem += buffer->stride) {
-			ret = colorset(shmem, color, stride)? 1: 0;
+			ret = colorset(shmem, color, buffer->region.w)? 1: 0;
 			if (!ret) break;
 		}
 	}

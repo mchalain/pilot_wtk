@@ -66,6 +66,7 @@ int canvas_draw(void *draw_data, void *shm_buffer)
 	uint32_t w, h;
 	pilot_widget_size((struct pilot_widget *)data->window, &w, &h);
 	paint_pixels(shm_buffer, 20, w, h, data->change);
+	printf("\ndraw\n\n");
 	return 0;
 }
 
@@ -127,33 +128,27 @@ int main(int argc, char **argv)
 	int ret = 0;
 	struct pilot_display *display;
 	struct pilot_window *mainwindow;
-	struct pilot_window *window2;
+	struct pilot_theme *theme = NULL;
 
 	/**
 	 * Setup
 	 **/
 	g_application = pilot_application_create(argc, argv);
 	display = pilot_display_create(g_application);
+	theme = pilot_theme_create(display);
 
-	mainwindow = pilot_window_create((struct pilot_widget *)display, argv[0], 500, 500, NULL);
+	mainwindow = pilot_window_create((struct pilot_widget *)display, argv[0], 500, 500, theme);
 	if (!mainwindow)
+		return -1;
+	if (mainwindow_init(mainwindow) < 0)
 		return -1;
 
 	pilot_display_add_window(display, mainwindow);
 
 
-	window2 = pilot_window_create((struct pilot_widget *)mainwindow, "toto", 250, 250, NULL);
-	if (!window2)
-		return -1;
-	if (mainwindow_init(window2) < 0)
-		return -1;
-
-	pilot_window_set_layout(mainwindow, (struct pilot_widget *)window2);
-
 	struct pilot_widget *mainwidget = (struct pilot_widget *)mainwindow;
-	struct pilot_widget *widget2 = (struct pilot_widget *)window2;
-	pilot_connect(mainwidget, focusChanged, widget2, main_window_focus);
-	pilot_connect(mainwidget, clicked, widget2, click);
+	pilot_connect(mainwidget, focusChanged, mainwindow, main_window_focus);
+	pilot_connect(mainwidget, clicked, mainwindow, click);
 
 	pilot_window_show(mainwindow);
 
@@ -165,8 +160,7 @@ int main(int argc, char **argv)
 	/**
 	 * Cleanup
 	 **/
-	mainwindow_fini(window2);
-	pilot_window_destroy(window2);
+	mainwindow_fini(mainwindow);
 	pilot_window_destroy(mainwindow);
 	pilot_display_destroy(display);
 	pilot_application_destroy(g_application);

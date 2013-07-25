@@ -39,6 +39,7 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 	if (parent->is_display) {
 		window->common.window = window;
 		window->is_mainwindow = 1;
+		window->opaque = 1;
 	}
 	display = window->common.display;
 
@@ -53,7 +54,6 @@ pilot_window_create(struct pilot_widget *parent, char *name, uint32_t width, uin
 		window->theme = pilot_theme_attach(theme, window);
 	}
 	LOG_DEBUG("rect %d x %d", width, height);
-	window->opaque = 1;
 
 	window->common.action.redraw = _pilot_window_redraw;
 	window->common.action.resize = _pilot_window_resize;
@@ -104,9 +104,8 @@ pilot_window_show(struct pilot_window *window)
 	if (window->layout) {
 		ret += pilot_widget_show(window->layout);
 	}
-	LOG_DEBUG("layout %p", window->layout);
-	ret += _pilot_window_redraw(window);
-	if (ret >= 0) ret = 0;
+	if (ret && window->is_mainwindow)
+		return _platform_window_flush(window);
 	return ret;
 }
 

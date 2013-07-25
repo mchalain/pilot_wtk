@@ -16,7 +16,7 @@ pilot_theme_create(struct pilot_display *display)
 	memset(theme, 0, sizeof(*theme));
 	theme->window = NULL;
 
-	theme->bgcolor = 0xFFFFFFFF;
+	theme->bgcolor = 0x00CCCCCC;
 	theme->border = 2;
 	theme->changed = 1;
 	return theme;
@@ -29,7 +29,8 @@ pilot_theme_attach(struct pilot_theme *theme, struct pilot_window *window)
 
 	newtheme = pilot_theme_create(NULL);
 	newtheme->window = window;
-	newtheme->bgcolor = theme->bgcolor | (newtheme->window->opaque)? 0xFF000000: 0;
+	newtheme->bgcolor = theme->bgcolor;
+	newtheme->bgcolor |= (window->opaque)? 0xFF000000: 0;
 	newtheme->border = theme->border;
 	
 	if (newtheme->window)
@@ -47,7 +48,7 @@ pilot_theme_attach(struct pilot_theme *theme, struct pilot_window *window)
 		if (!_pilot_theme_resize_window(newtheme, &region)) {
 			pilot_rect_copy(&window->common.region, &region);
 		}
-		pilot_buffer_fill(newtheme->buffer, theme->bgcolor);
+		pilot_buffer_fill(newtheme->buffer, newtheme->bgcolor);
 		LOG_DEBUG("");
 	}
 

@@ -67,6 +67,7 @@ int main(int argc, char **argv)
 	if (!mainwindow)
 		return -1;
 	mainwindow_init(mainwindow);
+LOG_DEBUG("window %p", mainwindow);
 
 	pilot_display_add_window(display, mainwindow);
 
