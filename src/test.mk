@@ -1,21 +1,18 @@
-bin-y+=test0
-bin-y+=test1
-bin-y+=test1-2
-test0-objs=test0.o
-test1-objs=test1.o
-test1-2-objs=test1-2.o
-test-objs=$(addprefix $(obj)/,$(test0-objs) $(test1-objs) $(test1-2-objs))
+test-libs=pilot_atk pilot_wtk pilot_utk
 
-$(test-objs):CFLAGS+=-I./include
-$(addprefix $(obj)/,$(bin-y)):LDFLAGS+=-L/usr/local/lib
-$(addprefix $(obj)/,$(bin-y)):LIBRARY+=-lwayland-client
-test-libs=libpilot_atk libpilot_wtk libpilot_utk
-ifdef STATIC
-test-libs:=$(addsuffix $(slib-ext:%=.%), $(test-libs))
-else
-test-libs:=$(addsuffix $(dlib-ext:%=.%), $(test-libs))
-endif
-test-libs:=$(addprefix $(obj)/, $(test-libs))
-test0-libs:=$(test-libs)
-test1-libs:=$(test-libs)
-test1-2-libs:=$(test-libs)
+bin-y+=test0
+test0_CFLAGS=-I./include
+test0_LIBRARY=$(test-libs)
+bin-y+=test1
+test1_CFLAGS=-I./include
+test1_LIBRARY=$(test-libs)
+bin-y+=test1-2
+test1-2_CFLAGS=-I./include
+test1-2_LIBRARY=$(test-libs)
+bin-y+=test3
+test3-objs=test3.o test3.res.o
+test3_CFLAGS=-I./include
+test3.res_CFLAGS=-I./include
+test3_LIBRARY=$(test-libs)
+test3_LDFLAGS+=-rdynamic
+

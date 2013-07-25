@@ -12,7 +12,7 @@ dlib-ext=so
 include ./config
 
 CFLAGS=-g -DDEBUG
-STATIC=1
+STATIC=
 DYNAMIC=1
 TEST=1
 
