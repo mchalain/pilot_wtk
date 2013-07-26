@@ -3,6 +3,8 @@ pilot_wtk_SOURCES=pilot_display.c \
 	pilot_input.c \
 	pilot_window.c \
 	pilot_canvas.c \
+	pilot_surface.c \
+	pilot_fbuffer.c \
 	pilot_buffer.c \
 	pilot_widget.c \
 	pilot_layout.c \

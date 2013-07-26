@@ -127,11 +127,41 @@ pilot_widget_grabkeys(struct pilot_widget *widget, pilot_bool_t yes)
 	return 0;
 }
 
+int
+pilot_widget_change_focus(struct pilot_widget *widget, struct pilot_widget *newwidgetchanged, char in)
+{
+	if (widget == newwidgetchanged)
+	{
+		struct pilot_widget *window = (struct pilot_widget *)widget->window;
+		if (!window->hasfocus && in) {
+			window->hasfocus = 1;
+			pilot_emit(window, focusChanged, in);
+		}
+		if (window->hasfocus && !in) {
+			window->hasfocus = 0;
+			pilot_emit(window, focusChanged, in);
+		}
+		if (widget->hasfocus != in) {
+			widget->hasfocus = in;
+			pilot_emit(widget, focusChanged, in);
+		}
+	}
+	if ((struct pilot_display *)widget == newwidgetchanged->display) {
+		struct pilot_display *display = (struct pilot_display *)widget;
+		struct pilot_window *focus_widget;
+		pilot_bool_t (*hasfocus)(struct pilot_window *) = 
+				(pilot_bool_t (*)(struct pilot_window *))pilot_widget_hasfocus;
+		focus_widget = pilot_display_search_window(display, hasfocus);
+		pilot_emit(display, focusChanged, (struct pilot_widget *)focus_widget, 0);
+		pilot_emit(display, focusChanged, widget, 1);
+	}
+	return 0;
+}
+
 void
 pilot_widget_focus(struct pilot_widget *widget)
 {
-	pilot_emit(widget->parent, focusChanged, 0);
-	pilot_emit_to(widget->parent, focusChanged, widget, 0);
+	pilot_widget_change_focus((struct pilot_widget *)widget->display, widget, 1);
 }
 
 #ifndef HAVE_INLINE

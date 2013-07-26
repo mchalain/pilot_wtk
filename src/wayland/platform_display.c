@@ -162,3 +162,20 @@ _platform_display_search_window(struct pilot_display *display, struct wl_surface
 	}
 	return windows_it->item;
 }
+
+int
+_platform_display_region(struct pilot_display *display,
+					pilot_rect_t *region)
+{
+	return 0;
+}
+
+static pilot_pixel_format_t
+_platform_display_format(struct pilot_display *display)
+{
+	if (display->formats & PILOT_DISPLAY_ARGB8888) {
+		return PILOT_DISPLAY_ARGB8888;
+	}
+	return PILOT_DISPLAY_XRGB8888;
+}
+

@@ -2,7 +2,7 @@
 
 static const struct wl_shell_surface_listener _st_shell_surface_listener;
 
-static	int
+static int
 _platform_window_create(struct pilot_window *window, struct pilot_display *display)
 {
 	struct platform_window *platform = malloc(sizeof(*platform));
@@ -97,6 +97,16 @@ _platform_window_flush(struct pilot_window *window)
 	return 0;
 }
 
+static struct pilot_surface *
+_platform_window_surface(struct pilot_window *window, pilot_rect_t region)
+{
+	pilot_pixel_format_t format;
+
+	format = window->surfaces[0]->format;
+	pilot_rect_copy(&region, &window->common.region);
+	return (struct pilot_surface *)pilot_buffer_create(window, region, format);
+}
+
 static void
 _pilot_window_frame_handler(void *data, struct wl_callback *callback, uint32_t time)
 {
@@ -109,7 +119,7 @@ _pilot_window_frame_handler(void *data, struct wl_callback *callback, uint32_t t
 
 	if (callback)
 		wl_callback_destroy(callback);
-
+	LOG_DEBUG("");
 	_pilot_window_redraw(data);
 }
 

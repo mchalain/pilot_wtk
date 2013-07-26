@@ -51,7 +51,7 @@ _pilot_canvas_destroy(void *widget)
 	mutex_destroy(canvas->paintmutex);
 	for (i = 0; i < MAXBUFFERS; i++)
 		if (canvas->buffers[i]) {
-			pilot_buffer_destroy(canvas->buffers[i]);
+			pilot_surface_destroy((struct pilot_surface *)canvas->buffers[i]);
 			canvas->buffers[i] = 0;
 		}
 
@@ -89,7 +89,7 @@ pilot_canvas_lock(struct pilot_canvas *canvas, void **image)
 	int i;
 	i = canvas->offscreenid;
 	if (canvas->buffers[i])
-		ret = pilot_buffer_lock(canvas->buffers[i], image);
+		ret = pilot_surface_lock((struct pilot_surface *)canvas->buffers[i], image);
 	LOG_DEBUG("ret %d",ret);
 	return ret;
 }
@@ -100,7 +100,7 @@ pilot_canvas_unlock(struct pilot_canvas *canvas)
 	int i;
 	i = canvas->offscreenid;
 	if (canvas->buffers[i])
-		pilot_buffer_unlock(canvas->buffers[i]);
+		pilot_surface_unlock((struct pilot_surface *)canvas->buffers[i]);
 	LOG_DEBUG("");
 }
 
@@ -119,23 +119,23 @@ _pilot_canvas_redraw(void *widget)
 	int ret = 0;
 	struct pilot_canvas *canvas = widget;
 	struct pilot_buffer *buffer;
-	struct pilot_window *window = (struct pilot_window *)canvas->common.window;
+	struct pilot_window *window = canvas->common.window;
 	int i;
 
 	i = (canvas->onscreenid + 1) & 0x1;
 	buffer = canvas->buffers[i];
-	if (buffer && !pilot_buffer_busy(buffer)) {
+	if (buffer && !pilot_surface_busy((struct pilot_surface *)buffer)) {
 		if (canvas->draw_handler) {
-			ret = canvas->draw_handler(canvas->draw_data, buffer->shm_data);
+			ret = canvas->draw_handler(canvas->draw_data, buffer->common.data);
 		} else
-			ret = pilot_buffer_ready(buffer)? 1:0;
-		LOG_DEBUG("ret %d",ret);
+			ret = pilot_surface_ready((struct pilot_surface *)buffer)? 1:0;
 		if (ret) {
-			pilot_buffer_paint_window(buffer, window);	
+			pilot_surface_paint_window((struct pilot_surface *)buffer, window);	
 			canvas->onscreenid = i;
 		}
 	}
-	
+	LOG_DEBUG("ret %d i %d buffer %p",ret, i, buffer);
+	if (ret < 0) ret = 0;
 	return ret;
 }
 
@@ -149,17 +149,14 @@ _pilot_canvas_resize(void *widget, uint32_t width, uint32_t height)
 static int
 _pilot_canvas_add_buffer(struct pilot_canvas *canvas)
 {
-	struct pilot_buffer *buffer;
+	struct pilot_surface *buffer;
 	int i;
 
 	for (i = 0; i< MAXBUFFERS; i++) if (canvas->buffers[i] == NULL) break;
 	if (i == MAXBUFFERS)
 		return -1;
-	buffer = pilot_buffer_create((struct pilot_widget *)canvas,
-									canvas->common.region.w,
-									canvas->common.region.h,
-									canvas->common.format);
-
+	buffer = pilot_window_surface(canvas->common.window,
+							canvas->common.region);
 	if (!buffer)
 		return -1;
 	canvas->buffers[i] = buffer;
@@ -174,7 +171,7 @@ _pilot_canvas_next_buffer(struct pilot_canvas *canvas)
 	int i = 0;
 
 	for (i = 0; i < MAXBUFFERS && canvas->buffers[i]; i++)
-		if (!pilot_buffer_busy(canvas->buffers[i])) {
+		if (!pilot_surface_busy((struct pilot_surface *)canvas->buffers[i])) {
 			buffer = canvas->buffers[i];
 			break;
 		}

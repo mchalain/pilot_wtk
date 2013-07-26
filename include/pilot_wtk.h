@@ -3,14 +3,12 @@
 
 #include <stdint.h>
 #include "pilot_types.h"
+#include "pilot_log.h"
+#include "pilot_signal.h"
 
-#define MAXWINDOWS 3
 #define MAXBUFFERS 2
 #define MAXWIDGETS 4
-#define MAXSIGNALS 4
-#define MAXSLOTS 4
 
-#include "pilot_log.h"
 struct pilot_application;
 struct pilot_window;
 struct pilot_eglcanvas;
@@ -18,65 +16,6 @@ struct pilot_canvas;
 struct pilot_cursor;
 struct pilot_theme;
 
-#ifndef _pilot_signal
-#define _pilot_signal(obj, signal,...) \
-	struct { \
-		struct obj##_##signal##_slot{ \
-			int(*action)(struct pilot_widget *, ##__VA_ARGS__); \
-			struct pilot_widget *dest; \
-			struct obj##_##signal##_slot *next; \
-		} slots; \
-	} signal
-
-#define pilot_connect(src, signal, dst, slot) \
-	do { \
-		typeof(src->signal.slots) *slot_it = &src->signal.slots; \
-		while (slot_it->next) { \
-			if ((void *)slot_it->next->dest == (void *)dst && (void *)slot_it->next->action == (void *)slot) \
-				break; \
-			slot_it = slot_it->next; \
-		} \
-		if (!slot_it->next) { \
-			slot_it->next = malloc(sizeof(src->signal.slots)); \
-			memset(slot_it->next, 0, sizeof(src->signal.slots)); \
-			slot_it->next->dest = (struct pilot_widget *)dst; \
-			slot_it->next->action = slot; \
-		} \
-	} while(0)
-
-#define pilot_disconnect(src, signal, dst, slot) \
-	do { \
-		typeof(src->signal.slots) *slot_it = &src->signal.slots; \
-		while (slot_it->next) { \
-			if ((void *)slot_it->next->dest == (void *)dst && (void *)slot_it->next->action == (void *)slot) { \
-				typeof(src->signal.slots) *tmp = slot_it->next; \
-				slot_it->next = tmp->next; \
-				free(tmp); \
-			} \
-			else \
-				slot_it = slot_it->next; \
-		} \
-	} while(0)
-
-#define pilot_emit(src, signal, ...) \
-	do { \
-		typeof(src->signal.slots) *slot_it = &src->signal.slots; \
-		while (slot_it->next) { \
-			slot_it = slot_it->next; \
-			slot_it->action(slot_it->dest, ##__VA_ARGS__); \
-		} \
-	} while(0)
-
-#define pilot_emit_to(src, signal, dst, ...) \
-	do { \
-		typeof(src->signal.slots) *slot_it = &src->signal.slots; \
-		while (slot_it->next) { \
-			slot_it = slot_it->next; \
-			if ((void *)dst == (void *)slot_it->dest) \
-				slot_it->action(slot_it->dest, ##__VA_ARGS__); \
-		} \
-	} while(0)
-#endif
 
 #ifndef _pilot_list
 #define _pilot_list(type, name) struct _pilot_list_##type {\
@@ -157,7 +96,7 @@ struct pilot_display {
 	_pilot_list(pilot_window, windows);
 	_pilot_list(pilot_input, inputs);
 	struct pilot_cursor *cursor;
-	_pilot_signal(pilot_display, focusChanged, struct pilot_window *window, pilot_bool_t in);
+	_pilot_signal(pilot_display, focusChanged, struct pilot_widget *window, pilot_bool_t in);
 	_pilot_signal(pilot_display, inputChanged, struct pilot_input *input);
 #ifdef HAVE_SUSPEND_RESUME
 	_pilot_signal(pilot_display, suspended);
@@ -167,6 +106,39 @@ struct pilot_display {
 	pilot_bitsfield_t formats;
 	void *platform;
 	void *egl;
+};
+
+struct pilot_surface {
+	uint32_t size;
+	uint32_t stride;
+	pilot_length_t width;
+	pilot_length_t height;
+	pilot_pixel_format_t format;
+	pilot_bool_t busy:1;
+	pilot_bool_t ready:1;
+	pilot_bool_t regionning:1;
+	_pilot_mutex(lock);
+	_pilot_cond(cond);
+	void *data;
+	struct {
+		void (*destroy)(void *surface);
+		void (*paint_window)(void *surface, struct pilot_window *window);
+	} action;
+};
+
+struct pilot_fbuffer {
+	struct pilot_surface common;
+	struct pilot_display *display;
+	int id;
+	void *platform;
+};
+
+struct pilot_buffer {
+	struct pilot_surface common;
+	struct pilot_widget *parent;
+	pilot_rect_t region;
+	void *platform;
+	
 };
 
 struct pilot_cursor {
@@ -184,16 +156,17 @@ struct pilot_layout {
 
 struct pilot_theme {
 	struct pilot_window *window;
-	struct pilot_buffer *buffer;
 	struct pilot_widget *caption;
 	pilot_length_t border;
 	pilot_color_t bgcolor;
 	pilot_bitsfield_t changed:1;
+	pilot_bitsfield_t is_attached:1;
 	void *platform;
 };
 
 struct pilot_window {
 	struct pilot_widget common;
+	struct pilot_surface *surfaces[MAXBUFFERS];
 	struct pilot_theme *theme;
 	struct pilot_widget *layout;
 	pilot_length_t fullwidth, fullheight;
@@ -216,23 +189,6 @@ struct pilot_canvas
 	char	onscreenid:4;
 	f_draw_handler draw_handler;
 	void *draw_data;
-	void *platform;
-};
-
-struct pilot_buffer {
-	struct pilot_widget *parent;
-	uint32_t size;
-	uint32_t stride;
-	pilot_length_t width;
-	pilot_length_t height;
-	void *shm_data;
-	pilot_pixel_format_t format;
-	pilot_rect_t region;
-	pilot_bool_t busy:1;
-	pilot_bool_t ready:1;
-	pilot_bool_t regionning:1;
-	_pilot_mutex(lock);
-	_pilot_cond(cond);
 	void *platform;
 };
 
@@ -261,7 +217,7 @@ struct pilot_resource
 struct pilot_form
 {
 	struct pilot_widget common;
-	struct pilot_buffer *buffer;
+	struct pilot_surface *surface;
 	pilot_bool_t redraw;
 	pilot_color_t *image;
 	pilot_color_t *mask;
@@ -281,9 +237,14 @@ pilot_widget_show(struct pilot_widget *widget);
 int
 pilot_widget_redraw(struct pilot_widget *widget);
 int
-pilot_widget_resize(struct pilot_widget *widget, pilot_length_t width, pilot_length_t height);
+pilot_widget_resize(struct pilot_widget *widget,
+						pilot_length_t width, pilot_length_t height);
 int
-pilot_widget_size(struct pilot_widget *widget, pilot_length_t *width, pilot_length_t *height);
+pilot_widget_size(struct pilot_widget *widget,
+						pilot_length_t *width, pilot_length_t *height);
+int
+pilot_widget_change_focus(struct pilot_widget *widget,
+						struct pilot_widget *newwidgetchanged, char in);
 void
 pilot_widget_focus(struct pilot_widget *widget);
 int
@@ -326,6 +287,10 @@ typedef pilot_bool_t (*f_search_handler)(struct pilot_window *);
 typedef pilot_bool_t (*f_search_handler)(struct pilot_window *);
 struct pilot_window *
 pilot_display_search_window(struct pilot_display *display, f_search_handler search);
+struct pilot_surface *
+pilot_display_surface(struct pilot_display *display, pilot_rect_t region);
+void
+pilot_display_free_surface(struct pilot_display *display, struct pilot_surface *surface);
 /**
  * pilot_input API
  * **/
@@ -341,9 +306,13 @@ pilot_window_create(struct pilot_widget *parent, char *name, pilot_length_t widt
 void
 pilot_window_destroy(struct pilot_window *window);
 int
+pilot_window_detach(struct pilot_window *window, struct pilot_display *display);
+int
 pilot_window_set_layout(struct pilot_window *window, struct pilot_widget *layout);
 struct pilot_widget *
 pilot_window_layout(struct pilot_window *window);
+struct pilot_surface *
+pilot_window_surface(struct pilot_window *window, pilot_rect_t region);
 int
 pilot_window_show(struct pilot_window *window);
 void
@@ -381,23 +350,64 @@ pilot_canvas_lock(struct pilot_canvas *canvas, void **image);
 void
 pilot_canvas_unlock(struct pilot_canvas *canvas);
 /**
+ * pilot_surface API Abstract
+ * **/
+/*
+ struct pilot_surface *
+pilot_surface_create(pilot_rect_t rect,
+				pilot_pixel_format_t format);
+*/
+void
+pilot_surface_destroy(struct pilot_surface *surface);
+int
+pilot_surface_init(struct pilot_surface *surface,
+				pilot_rect_t region,
+				pilot_pixel_format_t format);
+void
+pilot_surface_paint_window(struct pilot_surface *surface, struct pilot_window *window);
+int
+pilot_surface_lock(struct pilot_surface *surface, void **image);
+void 
+pilot_surface_unlock(struct pilot_surface *surface);
+void
+pilot_surface_release(struct pilot_surface *surface);
+#ifndef HAVE_INLINE
+uint32_t
+pilot_surface_size(struct pilot_surface *surface);
+pilot_bool_t
+pilot_surface_busy(struct pilot_surface *surface);
+pilot_bool_t
+pilot_surface_ready(struct pilot_surface *surface);
+#else
+inline uint32_t
+pilot_surface_size(struct pilot_surface *surface){return surface->size;}
+inline pilot_bool_t
+pilot_surface_busy(struct pilot_surface *surface){return surface->busy;}
+pilot_bool_t
+pilot_surface_ready(struct pilot_surface *surface){return surface->ready;}
+#endif
+/**
+ * pilot_fbuffer API
+ * **/
+struct pilot_fbuffer *
+pilot_fbuffer_create(struct pilot_display *display,
+				pilot_rect_t region,
+				pilot_pixel_format_t pixel);
+/*
+void
+pilot_fbuffer_destroy(struct pilot_fbuffer *fbuffer);
+*/
+/**
  * pilot_buffer API
  * **/
 struct pilot_buffer *
 pilot_buffer_create(struct pilot_widget *widget,
-				pilot_length_t width,
-				pilot_length_t height,
+				pilot_rect_t region,
 				pilot_pixel_format_t pixel);
+/*
 void
 pilot_buffer_destroy(struct pilot_buffer *buffer);
-void
-pilot_buffer_paint_window(struct pilot_buffer *buffer, struct pilot_window *window);
-int
-pilot_buffer_lock(struct pilot_buffer *buffer, void **image);
-void 
-pilot_buffer_unlock(struct pilot_buffer *buffer);
-void
-pilot_buffer_release(struct pilot_buffer *buffer);
+*/
 	/**
 	 * pilot_buffer drawing API
 	 */
@@ -405,21 +415,6 @@ pilot_buffer_release(struct pilot_buffer *buffer);
 	pilot_buffer_set_region(struct pilot_buffer *buffer, pilot_rect_t *rect);
 	int
 	pilot_buffer_fill(struct pilot_buffer *buffer, pilot_color_t color);
-#ifndef HAVE_INLINE
-uint32_t
-pilot_buffer_size(struct pilot_buffer *buffer);
-pilot_bool_t
-pilot_buffer_busy(struct pilot_buffer *buffer);
-pilot_bool_t
-pilot_buffer_ready(struct pilot_buffer *buffer);
-#else
-inline uint32_t
-pilot_buffer_size(struct pilot_buffer *buffer){return buffer->size;}
-inline pilot_bool_t
-pilot_buffer_busy(struct pilot_buffer *buffer){return buffer->busy;}
-pilot_bool_t
-pilot_buffer_ready(struct pilot_buffer *buffer){return buffer->ready;}
-#endif
 /**
  * pilot_theme API
  * **/

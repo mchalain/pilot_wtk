@@ -18,7 +18,7 @@ keyboard_handle_enter(void *data, struct wl_keyboard *keyboard,
 	window = _platform_display_search_window(input->display, surface);
 	if (window) {
 		window->common.hasfocus = 1;
-		pilot_emit(input->display,focusChanged, window, 1);
+		pilot_emit(input->display,focusChanged, (struct pilot_widget *)window, 1);
 	}
 }
 
@@ -32,7 +32,7 @@ keyboard_handle_leave(void *data, struct wl_keyboard *keyboard,
 	window = _platform_display_search_window(input->display, surface);
 	if (window) {
 		window->common.hasfocus = 0;
-		pilot_emit(input->display,focusChanged, window, 0);
+		pilot_emit(input->display,focusChanged, (struct pilot_widget *)window, 0);
 	}
 }
 

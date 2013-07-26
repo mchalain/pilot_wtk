@@ -85,12 +85,6 @@ mainwindow_init(struct pilot_window *mainwindow)
 
 	pilot_canvas_set_draw_handler(canvas, canvas_draw, &canvas_data);
 	pilot_window_set_layout(mainwindow, (struct pilot_widget*)canvas);
-	void *image;
-	if (!pilot_canvas_lock(canvas_data.canvas, &image)) {
-		canvas_draw(&canvas_data, image);
-		pilot_canvas_unlock(canvas_data.canvas);
-		pilot_canvas_flip(canvas_data.canvas);
-	}
 	return 0;
 }
 
@@ -105,6 +99,7 @@ int keypressed(struct pilot_widget *widget, pilot_key_t key)
 		pilot_application_exit(g_application, 0);
 	return 0;
 }
+
 int click(struct pilot_widget *widget, pilot_key_t key)
 {
 	printf("click %d\n", key);

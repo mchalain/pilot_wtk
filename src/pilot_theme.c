@@ -32,25 +32,16 @@ pilot_theme_attach(struct pilot_theme *theme, struct pilot_window *window)
 	newtheme->bgcolor = theme->bgcolor;
 	newtheme->bgcolor |= (window->opaque)? 0xFF000000: 0;
 	newtheme->border = theme->border;
-	LOG_DEBUG("theme %p", newtheme);
+	LOG_DEBUG("");
 	if (newtheme->window)
 	{
-		int i = 0;
 		pilot_rect_t region;
-	LOG_DEBUG("window %p", window);
-		newtheme->buffer = pilot_buffer_create((struct pilot_widget *)window,
-									window->fullwidth,
-									window->fullheight,
-									window->common.format);
-		region.x = window->common.region.x;
-		region.y = window->common.region.y;
-		region.w = window->fullwidth;
-		region.h = window->fullheight;
+		pilot_rect_copy(&region, &window->common.region);
 		if (!_pilot_theme_resize_window(newtheme, &region)) {
 			pilot_rect_copy(&window->common.region, &region);
 		}
-		pilot_buffer_fill(newtheme->buffer, newtheme->bgcolor);
-		LOG_DEBUG("");
+		pilot_buffer_fill((struct pilot_buffer*)window->surfaces[0], newtheme->bgcolor);
+		newtheme->is_attached = 1;
 	}
 
 	return newtheme;
@@ -59,8 +50,6 @@ pilot_theme_attach(struct pilot_theme *theme, struct pilot_window *window)
 void
 pilot_theme_destroy(struct pilot_theme *theme)
 {
-	if (theme->buffer)
-		pilot_buffer_destroy(theme->buffer);
 	free(theme);
 }
 
@@ -84,12 +73,6 @@ pilot_theme_redraw_window(struct pilot_theme *theme)
 		return 0;
 	if (theme->caption && theme->changed)
 		ret = pilot_widget_redraw(theme->caption);
-	if (theme->buffer && theme->changed)
-	{
-		ret +=1;
-		LOG_DEBUG("");
-		pilot_buffer_paint_window(theme->buffer, theme->window);
-	}
 	theme->changed = 0;
 	return ret;
 }
