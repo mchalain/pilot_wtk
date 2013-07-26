@@ -4,8 +4,10 @@
 #include <stdint.h>
 #include "pilot_types.h"
 #include "pilot_log.h"
+#include "pilot_signal.h"
 
 typedef void pilot_object_t;
+
 
 #ifndef _pilot_list
 #define _pilot_list(type, name) struct _pilot_list_##type {\
