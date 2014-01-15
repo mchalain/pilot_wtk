@@ -59,13 +59,15 @@ struct pilot_application
 	_pilot_list(pilot_connector, connectors);
 	fd_set rfds;
 	int maxfd;
-	pilot_bool_t running;
+	int signal_pipe[2];
+	pilot_bool_t running:1;
+	pilot_bool_t dispatch:1;
 };
 
 struct pilot_application *
 pilot_application_create(int argc, char **argv);
 void
-pilot_application_destroy();
+pilot_application_destroy(struct pilot_application *application);
 int
 pilot_application_addconnector(struct pilot_application *application,
 						struct pilot_connector *connector);
@@ -77,5 +79,16 @@ int
 pilot_application_run(struct pilot_application *application);
 int
 pilot_application_exit(struct pilot_application *application, int ret);
+
+struct pilot_timer
+{
+	struct pilot_connector *connector;
+	_pilot_signal(pilot_timer, ring, int id);
+};
+
+struct pilot_timer *
+pilot_timer_create(struct pilot_application *application);
+void
+pilot_timer_destroy(struct pilot_timer *timer);
 
 #endif
