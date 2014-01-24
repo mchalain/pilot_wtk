@@ -13,8 +13,7 @@ include ./config
 
 CFLAGS=-g -DDEBUG
 STATIC=
-TEST=1
-PTHREAD=
+PTHREAD=y
 
 ifdef PTHREAD
 CFLAGS+=-DPTHREAD
@@ -22,12 +21,10 @@ LDFLAGS+=-pthread
 LIBRARY+=pthread
 endif
 
-include $(src)/pilot_wtk.mk
 include $(src)/pilot_atk.mk
+include $(src)/pilot_wtk.mk
 include $(src)/pilot_utk.mk
-ifdef TEST
 include $(src)/test.mk
-endif
 
 include ./scripts.mk
 

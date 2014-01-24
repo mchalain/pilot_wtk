@@ -18,9 +18,6 @@ quiet_cmd_ld_slib=LD $*
 quiet_cmd_ld_dlib=LD $*
  cmd_ld_dlib=$(Q)$(LD) $(LDFLAGS) $($*_LDFLAGS) -shared -Wl,-soname,$@ -o $@ $^ $(LIBRARY:%=-l%) $($*_LIBRARY:%=-l%)
 
-$(obj)/%.o:$(src)/%.c
-	@$(call cmd,cc_o_c)
-
 ifdef STATIC
 lib-static-target:=$(addprefix $(obj)/lib,$(addsuffix $(slib-ext:%=.%),$(lib-y)))
 else
@@ -37,7 +34,14 @@ target-objs:=$(foreach t, $(lib-y) $(bin-y), $(if $($(t)-objs), $(addprefix $(ob
 CFLAGS+=-I./$(src)
 LDFLAGS+=-L./$(obj)
 
-all: $(targets)
+all: $(obj) $(targets)
+	@:
+
+$(obj):
+	mkdir -p $@
+
+$(obj)/%.o:$(src)/%.c
+	@$(call cmd,cc_o_c)
 
 .SECONDEXPANSION:
 $(lib-static-target): CFLAGS+=$($*_CFLAGS)

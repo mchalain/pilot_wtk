@@ -1,4 +1,4 @@
-lib-y+=pilot_wtk
+lib-$(CONFIG_PILOT_WTK)+=pilot_wtk
 pilot_wtk_SOURCES=pilot_display.c \
 	pilot_input.c \
 	pilot_window.c \
@@ -14,7 +14,7 @@ pilot_wtk_SOURCES=pilot_display.c \
 
 pilot_wtk-objs=$(pilot_wtk_SOURCES:%.c=%.o)
 
-pilot_wtk_CFLAGS+=-I./include -I./weston_shared
+pilot_wtk_CFLAGS+=$(CONFIG_PILOT_CFLAGS) -I./weston_shared
 ifeq ($(HAVE_KEYBOARD),y)
 pilot_wtk_CFLAGS+=-DHAVE_KEYBOARD
 endif
