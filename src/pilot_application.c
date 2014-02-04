@@ -55,8 +55,11 @@ pilot_connector_wait(struct pilot_connector *thiz)
 		if (thiz->distribut) {
 			pilot_emit(thiz, dispatch_events, thiz);
 		}
+		ret = thiz->distribut;
 		thiz->distribut = 0;
 	}
+	else
+		ret = -1;
 	return ret;
 }
 
