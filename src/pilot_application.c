@@ -29,6 +29,37 @@ pilot_connector_destroy(struct pilot_connector *thiz)
 	free(thiz);
 }
 
+int
+pilot_connector_wait(struct pilot_connector *thiz)
+{
+	int ret = 0;
+	int maxfd = 0;
+	fd_set rfds;
+
+	if (thiz->fd >= 0)
+	{
+		FD_SET(thiz->fd, &rfds);
+		//maxfd = MAX(maxfd, thiz->fd + 1);
+		maxfd = thiz->fd + 1;
+		pilot_emit(thiz, prepare_wait, thiz);
+		/// after prepare_wait, an event could be alreay availlable
+		if (thiz->distribut == 0)
+		{
+			ret = select(maxfd, &rfds, NULL, NULL, NULL);
+			if (ret > 0 && FD_ISSET(thiz->fd, &rfds))
+			{
+				LOG_DEBUG("on %d",thiz->fd);
+				thiz->distribut = 1;
+			}
+		}
+		if (thiz->distribut) {
+			pilot_emit(thiz, dispatch_events, thiz);
+		}
+		thiz->distribut = 0;
+	}
+	return ret;
+}
+
 static int
 _platform_application_dispatch_events(struct pilot_application *application);
 

@@ -23,7 +23,9 @@ struct pilot_connector
 struct pilot_connector *
 pilot_connector_create(struct pilot_application *application);
 void
-pilot_connector_destroy(struct pilot_connector *connector);
+pilot_connector_destroy(struct pilot_connector *thiz);
+int
+pilot_connector_wait(struct pilot_connector *thiz);
 
 struct pilot_application
 {
