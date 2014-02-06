@@ -81,40 +81,44 @@ static const struct wl_registry_listener _st_registry_listener = {
 	_registry_handle_global,
 	_registry_handle_global_remove
 };
-static int
+static void *
 _platform_display_create(struct pilot_display *display,
 					struct pilot_connector *connector)
 {
-	struct platform_display *platform;
-	display->platform = malloc(sizeof(struct platform_display));
-	platform = display->platform;
+	PILOT_CREATE_THIZ(platform_display);
 	
-	platform->display = wl_display_connect(NULL);
-	if (!platform->display) {
+	thiz->display = wl_display_connect(NULL);
+	if (!thiz->display) {
 		LOG_ERROR("display not found");
-		return -1;
+		free(thiz);
+		return NULL;
 	}
 
-	platform->registry = wl_display_get_registry(platform->display);
-	wl_registry_add_listener(platform->registry,
+	// display->platform must be initialized here
+	// display_roundtrip will run and require platform
+	display->platform = thiz;
+	thiz->registry = wl_display_get_registry(thiz->display);
+	wl_registry_add_listener(thiz->registry,
 				 &_st_registry_listener, display);
-	wl_display_roundtrip(platform->display);
+	wl_display_roundtrip(thiz->display);
 
-	if (platform->shm == NULL) {
+	if (thiz->shm == NULL) {
 		LOG_ERROR("no wl_shm global");
-		return -1;
+		free(thiz);
+		return NULL;
 	}
 
-	wl_display_roundtrip(platform->display);
+	wl_display_roundtrip(thiz->display);
 
 	if (!(display->formats & (1 << WL_SHM_FORMAT_XRGB8888))) {
 		LOG_ERROR("WL_SHM_FORMAT_XRGB32 not available");
-		return -1;
+		free(thiz);
+		return NULL;
 	}
 
-	connector->fd = wl_display_get_fd(platform->display);
+	connector->fd = wl_display_get_fd(thiz->display);
 
-	return 0;
+	return thiz;
 }
 
 static void
@@ -141,7 +145,8 @@ static int
 _platform_display_prepare_wait(struct pilot_display *display)
 {
 	struct platform_display *platform = display->platform;
-	return wl_display_flush(platform->display);
+	wl_display_flush(platform->display);
+	return 0;
 }
 
 static int
@@ -151,31 +156,9 @@ _platform_display_dispatch_events(struct pilot_display *display)
 	return wl_display_dispatch(platform->display);
 }
 
-struct pilot_window *
-_platform_display_search_window(struct pilot_display *display, struct wl_surface *surface)
+inline struct  platform_display *
+_platform_display(struct  pilot_display *display)
 {
-	typeof (display->windows) *windows_it = &display->windows;
-	while (windows_it->item) {
-		struct platform_window *pl_window = windows_it->item->platform;
-		if (pl_window->surface == surface) break;
-		windows_it = windows_it->next;
-	}
-	return windows_it->item;
-}
-
-int
-_platform_display_region(struct pilot_display *display,
-					pilot_rect_t *region)
-{
-	return 0;
-}
-
-static pilot_pixel_format_t
-_platform_display_format(struct pilot_display *display)
-{
-	if (display->formats & PILOT_DISPLAY_ARGB8888) {
-		return PILOT_DISPLAY_ARGB8888;
-	}
-	return PILOT_DISPLAY_XRGB8888;
+	return display->platform;
 }
 

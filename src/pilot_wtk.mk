@@ -1,15 +1,9 @@
 lib-$(CONFIG_PILOT_WTK)+=pilot_wtk
 pilot_wtk_SOURCES=pilot_display.c \
-	pilot_input.c \
 	pilot_window.c \
-	pilot_canvas.c \
 	pilot_surface.c \
-	pilot_fbuffer.c \
 	pilot_buffer.c \
-	pilot_widget.c \
-	pilot_layout.c \
-	pilot_theme.c \
-	pilot_form.c \
+	pilot_buffershm.c \
 	../weston_shared/os-compatibility.c
 
 pilot_wtk-objs=$(pilot_wtk_SOURCES:%.c=%.o)

@@ -3,9 +3,6 @@
 
 #include <wayland-client.h>
 
-struct pilot_window *
-_platform_display_search_window(struct pilot_display *display, struct wl_surface *surface);
-
 struct  platform_display {
 	struct wl_display *display;
 	struct wl_registry *registry;
@@ -15,7 +12,7 @@ struct  platform_display {
 	struct wl_seat *seat;
 };
 
-struct platform_window {
+struct platform_surface {
 	struct wl_surface *surface;
 	struct wl_shell_surface *shell_surface;
 	struct wl_callback *callback;
@@ -26,19 +23,9 @@ struct platform_buffer {
 	struct wl_buffer *buffer;
 };
 
-struct platform_cursor {
-	struct wl_cursor *cursor;
-	struct wl_surface *surface;
-	struct wl_cursor_theme *theme;
-};
+inline struct  platform_display *
+_platform_display(struct  pilot_display *display);
+inline struct  platform_surface *
+_platform_surface(struct  pilot_surface *surface);
 
-struct platform_eglcanvas {
-	struct wl_egl_window *native;
-};
-
-struct platform_input {
-	struct wl_seat *seat;
-	struct wl_pointer *pointer;
-	struct wl_keyboard *keyboard;
-};
 #endif

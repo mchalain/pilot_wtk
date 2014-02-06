@@ -8,6 +8,13 @@
 #include <pilot_signal.h>
 #include <pilot_list.h>
 
+#define PILOT_CREATE_THIZ(type) \
+	struct type *thiz; \
+	thiz = calloc(1, sizeof(*thiz)); \
+	if (!thiz) \
+		return NULL; \
+	memset(thiz, 0, sizeof(*thiz)); \
+
 typedef void pilot_object_t;
 
 struct pilot_connector

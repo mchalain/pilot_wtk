@@ -5,8 +5,10 @@
 #include <pilot_wtk.h>
 #include <pilot_atk.h>
 
+#include "pilot_wtk_internal.h"
+
 static int running = 0;
-static int
+static void *
 _platform_display_create(struct pilot_display *display,
 							struct pilot_connector *connector);
 static void
@@ -18,8 +20,13 @@ _platform_display_dispatch_events(struct pilot_display *display);
 int
 _platform_display_region(struct pilot_display *display,
 						pilot_rect_t *region);
-static pilot_pixel_format_t
-_platform_display_format(struct pilot_display *display);
+
+static int
+_pilot_display_prepare_wait(struct pilot_display *thiz);
+static int
+_pilot_display_dispatch_events(struct pilot_display *thiz);
+static int
+_pilot_display_synch(struct pilot_display *thiz);
 
 /**
  * display object
@@ -27,81 +34,90 @@ _platform_display_format(struct pilot_display *display);
 struct pilot_display *
 pilot_display_create(struct pilot_application *application)
 {
-	struct pilot_display *display;
-
-	display = malloc(sizeof(*display));
-	if (!display)
+	struct pilot_display *thiz;
+	thiz = calloc(1, sizeof(*thiz));
+	if (!thiz)
 		return NULL;
-	memset(display, 0, sizeof(*display));
+	memset(thiz, 0, sizeof(*thiz));
 
-	pilot_widget_init(&display->common, NULL);
-	display->common.display = display;
-	display->common.is_display = 1;
-	display->formats = 0;
+	thiz->formats = 0;
 
-	struct pilot_connector *connector = 
-		pilot_connector_create(display);
-	if (_platform_display_create(display, connector) < 0) {
+	thiz->connector = pilot_connector_create(application);
+	thiz->platform = _platform_display_create(thiz, thiz->connector);
+	if (thiz->platform == NULL) {
 		LOG_ERROR("platform not available");
-		free(display);
+		free(thiz);
 		return NULL;
 	}
-	connector->action.prepare_wait = _platform_display_prepare_wait;
-	connector->action.dispatch_events = _platform_display_dispatch_events;
-	pilot_application_addconnector(application, connector);
+	pilot_connect(thiz->connector, prepare_wait, thiz, _pilot_display_prepare_wait);
+	pilot_connect(thiz->connector, dispatch_events, thiz, _pilot_display_dispatch_events);
 
-	return display;
+	thiz->synchconnector = pilot_connector_create(application);
+	pipe(thiz->synchfd);
+	thiz->synchconnector->fd = thiz->synchfd[0];
+	pilot_connect(thiz->synchconnector, dispatch_events, thiz, _pilot_display_synch);
+
+	return thiz;
 }
 
 void
-pilot_display_destroy(struct pilot_display *display)
+pilot_display_destroy(struct pilot_display *thiz)
 {
-	_platform_display_destroy(display);
-	free(display);
+	pilot_connector_destroy(thiz->connector);
+	_platform_display_destroy(thiz);
+	free(thiz);
 }
 
-int
-pilot_display_add_window(struct pilot_display *display, struct pilot_window *window)
+static int
+_pilot_display_prepare_wait(struct pilot_display *thiz)
 {
-	if (!window->is_mainwindow) {
-		pilot_window_detach(window, display);
+	int ret = 0;
+	ret = _platform_display_prepare_wait(thiz);
+	if (thiz->force_redraw)
+		ret = 1;
+	return ret;
+}
+
+static int
+_pilot_display_dispatch_events(struct pilot_display *thiz)
+{
+	int ret = 0;
+	ret = _platform_display_dispatch_events(thiz);
+	return ret;
+}
+
+pilot_pixel_format_t
+pilot_display_format(struct pilot_display *thiz)
+{
+	if (thiz->formats & PILOT_DISPLAY_ARGB8888) {
+		return PILOT_DISPLAY_ARGB8888;
 	}
-	pilot_connect(display, focusChanged, (struct pilot_widget *)window, pilot_widget_change_focus);
-	pilot_list_append(display->windows, window);
+	return PILOT_DISPLAY_XRGB8888;
+}
+
+struct pilot_display_synch
+{
+	char msg;
+};
+
+int
+pilot_display_synch(struct pilot_display *thiz)
+{
+	struct pilot_display_synch synch = {.msg = 'S',};
+	
+	write(thiz->synchfd[1], &synch, sizeof(synch));
+	LOG_DEBUG("write");
 	return 0;
 }
 
-int
-pilot_display_add_input(struct pilot_display *display, struct pilot_input *input)
+static int
+_pilot_display_synch(struct pilot_display *thiz)
 {
-	LOG_DEBUG("");
-	pilot_list_append(display->inputs, input);
-	pilot_emit(display, inputChanged, input);
+	struct pilot_display_synch synch;
+	int ret;
+	ret = read(thiz->synchfd[0], &synch, sizeof(synch));
+	pilot_emit(thiz, synch);
 	return 0;
-}
-
-struct pilot_window *
-pilot_display_search_window(struct pilot_display *display, f_search_handler search)
-{
-	typeof (display->windows) *windows_it = &display->windows;
-	while (windows_it->item) {
-		if (search(windows_it->item)) break;
-		windows_it = windows_it->next;
-	}
-	return windows_it->item;
-}
-
-struct pilot_surface *
-pilot_display_surface(struct pilot_display *display, pilot_rect_t region)
-{
-	struct pilot_fbuffer *fbuffer;
-	pilot_pixel_format_t format;
-
-	_platform_display_region(display, &region);
-	format = _platform_display_format(display);
-	fbuffer = pilot_fbuffer_create(display, region, format);
-
-	return (struct pilot_surface *)fbuffer;
 }
 
 #include "platform_display.c"

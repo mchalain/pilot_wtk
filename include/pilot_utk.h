@@ -1,17 +1,26 @@
 #ifndef __PILOT_UTK_H__
 #define __PILOT_UTK_H__
 
-#define MEMSET(s, ll, l) 	{ \
-	typeof(ll) *t = (typeof(ll) *)s; \
-	while (t < (typeof(ll) *)s + l) { *t++ = ll;} \
-	return (t - (typeof(ll) *)s); \
-}
+struct pilot_memory
+{
+	void *data;
+	pilot_rect_t rect;
+	struct
+	{
+		void (*destroy)(struct pilot_memory *thiz);
+		int (*fill)(struct pilot_memory *thiz, pilot_color_t color);
+		int (*copy)(struct pilot_memory *thiz, struct pilot_memory * src);
+	} action;
+};
 
-#ifndef memset32
-inline int memset32(void *s, uint32_t ll, uint32_t l);
-#endif
-#ifndef memset16
-inline int memset16(void *s, uint16_t ll, uint32_t l);
-#endif
+struct pilot_memory *
+pilot_memory_create(void *data, pilot_rect_t rect);
+void
+pilot_memory_destroy(struct pilot_memory *thiz);
+int
+pilot_memory_fill(struct pilot_memory *thiz, pilot_color_t color);
+int
+pilot_memory_copy(struct pilot_memory *thiz, struct pilot_memory *src);
+
 
 #endif
