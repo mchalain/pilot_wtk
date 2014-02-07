@@ -22,11 +22,11 @@
 		} while(0)
 #define pilot_list_first(list) (list.next)?list.next->item:NULL; list.it = list.next
 #define pilot_list_next(list) (list.it->next)?list.it->next->item:NULL;list.it = list.it->next;
-#define pilot_list_foreach(list, func, data) do { list.it = list.next; \
+#define pilot_list_foreach(list, func, data, ...) do { list.it = list.next; \
 			while (list.it) { \
 				typeof (list) *it = list.it; \
 				list.it = list.it->next; \
-				if (func(data, it->item) < 0) break; \
+				if (func(data, it->item, ##__VA_ARGS__) < 0) break; \
 			} \
 		} while(0)
 #define pilot_list_destroy(list) do { list.it = list.next; \
