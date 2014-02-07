@@ -34,11 +34,7 @@ _pilot_display_synch(struct pilot_display *thiz);
 struct pilot_display *
 pilot_display_create(struct pilot_application *application)
 {
-	struct pilot_display *thiz;
-	thiz = calloc(1, sizeof(*thiz));
-	if (!thiz)
-		return NULL;
-	memset(thiz, 0, sizeof(*thiz));
+	PILOT_CREATE_THIZ(pilot_display);
 
 	thiz->formats = 0;
 
