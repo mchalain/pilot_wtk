@@ -102,7 +102,6 @@ pilot_display_synch(struct pilot_display *thiz)
 	struct pilot_display_synch synch = {.msg = 'S',};
 	
 	write(thiz->synchfd[1], &synch, sizeof(synch));
-	LOG_DEBUG("write");
 	return 0;
 }
 

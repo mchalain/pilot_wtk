@@ -113,7 +113,7 @@ _pilot_surface_frame_handler(void *data, struct wl_callback *callback, uint32_t 
 {
 	struct pilot_surface *surface = data;
 	struct platform_surface *platform = surface->platform;
-LOG_DEBUG("");
+
 	if (callback != platform->callback)
 		return;
 	platform->callback = NULL;
