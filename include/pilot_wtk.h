@@ -14,6 +14,7 @@ struct pilot_application;
 struct pilot_connector;
 struct pilot_window;
 struct pilot_surface;
+struct pilot_widget;
 
 typedef enum
 {
@@ -33,22 +34,45 @@ struct pilot_display {
 	void *platform;
 };
 
+typedef enum
+{
+	EWidgetWindow,
+	EWidgetCommon,
+} pilot_widget_type_t;
+
 struct pilot_window {
 	struct pilot_display *display;
+	pilot_widget_type_t type;
+	pilot_length_t width;
+	pilot_length_t height;
+	struct {
+		void (*destroy)(struct pilot_window *thiz);
+		int (*show)(struct pilot_window *thiz);
+		int (*redraw)(struct pilot_window *thiz);
+		int (*resize)(struct pilot_window *thiz, pilot_length_t width, pilot_length_t height);
+	} action;
+	struct pilot_widget *layout;
 	struct pilot_surface *surface;
 	struct pilot_rect drawingrect;
-	pilot_length_t fullwidth, fullheight;
-	pilot_bitsfield_t is_mainwindow:1;
 	pilot_bitsfield_t fullscreen:1;
 	pilot_bitsfield_t opaque:1;
 	char *name;
-	struct {
-		void (*destroy)(struct pilot_window *window);
-		int (*show)(struct pilot_window *window);
-		int (*redraw)(struct pilot_window *window);
-		int (*resize)(struct pilot_window *window, pilot_length_t width, pilot_length_t height);
-	} action;
 	void *platform;
+};
+
+struct pilot_widget {
+	struct pilot_widget *parent;
+	pilot_widget_type_t type;
+	pilot_length_t width;
+	pilot_length_t height;
+	struct {
+		void (*destroy)(struct pilot_widget *thiz);
+		int (*show)(struct pilot_widget *thiz);
+		int (*redraw)(struct pilot_widget *thiz);
+		int (*resize)(struct pilot_widget *thiz, pilot_length_t width, pilot_length_t height);
+	} action;
+	_pilot_list(pilot_widget, childs);
+	void *widget;
 };
 
 /**
@@ -59,17 +83,25 @@ pilot_display_create(struct pilot_application *application);
 void
 pilot_display_destroy(struct pilot_display *display);
 int
-pilot_display_exit(struct pilot_display *display, int ret);
+pilot_display_exit(struct pilot_display *thiz, int ret);
 pilot_pixel_format_t
-pilot_display_format(struct pilot_display *display);
+pilot_display_format(struct pilot_display *thiz);
 /**
  * pilot_window API
  * **/
 struct pilot_window *
 pilot_window_create(struct pilot_display *display, char *name, struct pilot_rect rect);
 void
-pilot_window_destroy(struct pilot_window *window);
+pilot_window_destroy(struct pilot_window *thiz);
 int
-pilot_window_show(struct pilot_window *window);
+pilot_window_show(struct pilot_window *thiz);
+
+/**
+ * pilot_widget API
+ * **/
+struct pilot_widget *
+pilot_widget_create(struct pilot_widget *parent, struct pilot_rect rect);
+void
+pilot_widget_destroy(struct pilot_widget *thiz);
 
 #endif

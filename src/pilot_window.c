@@ -3,6 +3,7 @@
 #include <string.h>
 #include <pilot_wtk.h>
 #include <pilot_utk.h>
+#include <pilot_atk.h>
 
 #include "pilot_wtk_internal.h"
 
@@ -14,12 +15,9 @@ _pilot_window_redraw(struct pilot_window *thiz);
 struct pilot_window *
 pilot_window_create(struct pilot_display *display, char *name, struct pilot_rect rect)
 {
-	struct pilot_window *thiz;
-	thiz = calloc(1, sizeof(*thiz));
-	if (!thiz)
-		return NULL;
-	memset(thiz, 0, sizeof(*thiz));
+	PILOT_CREATE_THIZ(pilot_window);
 
+	thiz->type = EWidgetWindow;
 	thiz->display = display;
 	thiz->surface = pilot_surface_create(display, rect);
 
@@ -30,6 +28,7 @@ pilot_window_create(struct pilot_display *display, char *name, struct pilot_rect
 
 	memcpy(&thiz->drawingrect, &rect, sizeof(thiz->drawingrect));
 	thiz->action.destroy = _pilot_window_destroy;
+	pilot_list_append(display->windows, thiz);
 
 	return thiz;
 }
@@ -37,6 +36,7 @@ pilot_window_create(struct pilot_display *display, char *name, struct pilot_rect
 static void
 _pilot_window_destroy(struct pilot_window *thiz)
 {
+	pilot_list_remove(thiz->display->windows, thiz);
 	if (thiz->surface) {
 		pilot_surface_destroy(thiz->surface);
 	}
@@ -83,7 +83,8 @@ _pilot_window_redraw(struct pilot_window *thiz)
 			.h = thiz->surface->height, };
 		struct pilot_memory * video = pilot_memory_create(image, rect);
 		ret = pilot_memory_fill(video, color);
-
+		if (thiz->layout)
+			pilot_widget_redraw(thiz->layout);
 		pilot_memory_destroy(video);
 	}
 	pilot_surface_unlock(thiz->surface);

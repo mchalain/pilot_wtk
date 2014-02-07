@@ -55,7 +55,6 @@ _platform_surface_flush(struct pilot_surface *surface)
 		platform->region = NULL;
 	}
 
-	//wl_surface_damage(platform->surface, 0, 0, window->fullwidth, window->fullheight);
 	wl_surface_damage(platform->surface, 0,
 								0, 
 								surface->width,

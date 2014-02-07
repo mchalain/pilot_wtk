@@ -38,6 +38,9 @@ struct pilot_buffer {
 	void *platform;
 };
 
+int
+pilot_widget_redraw(struct pilot_widget *thiz);
+
 /**
  * pilot_surface
  * **/
