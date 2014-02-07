@@ -58,14 +58,28 @@ pilot_buffer_paint(struct pilot_buffer *thiz)
 	return ret;
 }
 
+void
+pilot_buffer_busy(struct pilot_buffer *thiz, int busy)
+{
+	if (!mutex_lock(thiz->lock))
+	{
+		thiz->busy = busy;
+		cond_signal(thiz->cond);
+		mutex_unlock(thiz->lock);
+	}
+}
+
 int
 pilot_buffer_lock(struct pilot_buffer *thiz, void **shm)
 {
 	int ret = -1;
 	if (!mutex_lock(thiz->lock))
 	{
+		LOG_DEBUG("");
+		ret = 0;
 		while (thiz->busy || thiz->ready)
 		{
+			// becarefull cond_wait HAVE NOT TO block the main loop on select
 			ret = cond_wait(thiz->cond, thiz->lock);
 			if (ret)
 			{
@@ -81,6 +95,7 @@ pilot_buffer_lock(struct pilot_buffer *thiz, void **shm)
 int
 pilot_buffer_unlock(struct pilot_buffer *thiz)
 {
+	LOG_DEBUG("");
 	thiz->ready = 1;
 	mutex_unlock(thiz->lock);
 	return 0;

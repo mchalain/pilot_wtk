@@ -1,26 +1,26 @@
 #ifndef __PILOT_UTK_H__
 #define __PILOT_UTK_H__
 
-struct pilot_memory
+struct pilot_blit
 {
 	void *data;
 	pilot_rect_t rect;
 	struct
 	{
-		void (*destroy)(struct pilot_memory *thiz);
-		int (*fill)(struct pilot_memory *thiz, pilot_color_t color);
-		int (*copy)(struct pilot_memory *thiz, struct pilot_memory * src);
+		void (*destroy)(struct pilot_blit *thiz);
+		int (*fill)(struct pilot_blit *thiz, pilot_color_t color);
+		int (*copy)(struct pilot_blit *thiz, struct pilot_blit * src);
 	} action;
 };
 
-struct pilot_memory *
-pilot_memory_create(void *data, pilot_rect_t rect);
+struct pilot_blit *
+pilot_blit_create(void *data, pilot_rect_t rect);
 void
-pilot_memory_destroy(struct pilot_memory *thiz);
+pilot_blit_destroy(struct pilot_blit *thiz);
 int
-pilot_memory_fill(struct pilot_memory *thiz, pilot_color_t color);
+pilot_blit_fill(struct pilot_blit *thiz, pilot_color_t color);
 int
-pilot_memory_copy(struct pilot_memory *thiz, struct pilot_memory *src);
+pilot_blit_copy(struct pilot_blit *thiz, struct pilot_blit *src);
 
 
 #endif

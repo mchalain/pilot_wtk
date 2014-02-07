@@ -33,9 +33,9 @@ pilot_surface_create(struct pilot_display *display,
 	thiz->offscreenbufferid = 0;
 	thiz->buffers[0] = pilot_buffershm_create(thiz, thiz->size);
 	thiz->buffers[1] = pilot_buffershm_create(thiz, thiz->size);
-	pilot_connect(display, synch, thiz, pilot_surface_paint);
 	mutex_init(thiz->lock, NULL);
 	cond_init(thiz->cond, NULL);
+	thiz->ready = 1;
 
 	return thiz;
 }
@@ -62,8 +62,10 @@ int
 pilot_surface_paint(struct pilot_surface *thiz)
 {
 	int ret = -1;
+
 	if (!mutex_lock(thiz->lock))
 	{
+
 		if (thiz->onscreenbuffer && thiz->onscreenbuffer->ready)
 		{
 			ret = pilot_buffer_paint(thiz->onscreenbuffer);
@@ -73,7 +75,7 @@ pilot_surface_paint(struct pilot_surface *thiz)
 		cond_signal(thiz->cond);
 		mutex_unlock(thiz->lock);
 	}
-	return ret;
+	return 0;
 }
 
 int
@@ -113,6 +115,7 @@ pilot_surface_flip(struct pilot_surface *thiz)
 		ret = 0;
 		while (thiz->onscreenbuffer)
 		{
+			// becarefull cond_wait HAVE NOT TO block the main loop on select
 			ret = cond_wait(thiz->cond, thiz->lock);
 		}
 		if (!ret)

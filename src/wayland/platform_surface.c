@@ -64,6 +64,7 @@ _platform_surface_flush(struct pilot_surface *surface)
 	wl_callback_add_listener(platform->callback, &_st_frame_listener, surface);
 
 	wl_surface_commit(platform->surface);
+	surface->ready = 0;
 	return 0;
 }
 
@@ -112,8 +113,7 @@ _pilot_surface_frame_handler(void *data, struct wl_callback *callback, uint32_t 
 {
 	struct pilot_surface *surface = data;
 	struct platform_surface *platform = surface->platform;
-
-	LOG_DEBUG("1");
+LOG_DEBUG("");
 	if (callback != platform->callback)
 		return;
 	platform->callback = NULL;

@@ -39,7 +39,10 @@ struct pilot_buffer {
 };
 
 int
-pilot_widget_redraw(struct pilot_widget *thiz);
+pilot_window_redraw(struct pilot_window *thiz);
+
+int
+pilot_widget_redraw(struct pilot_widget *thiz, struct pilot_blit *blit);
 
 /**
  * pilot_surface
@@ -67,4 +70,6 @@ pilot_buffershm_create(struct pilot_surface *surface,
 				int size);
 void
 pilot_buffer_destroy(struct pilot_buffer *thiz);
+void
+pilot_buffer_busy(struct pilot_buffer *thiz, int busy);
 #endif

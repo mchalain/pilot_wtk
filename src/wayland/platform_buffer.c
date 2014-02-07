@@ -4,7 +4,7 @@ static void
 _platform_buffer_release(void *data, struct wl_buffer *buffer)
 {
 	struct pilot_buffer *mybuf = data;
-	mybuf->busy = 0;
+	pilot_buffer_busy(mybuf, 0);
 }
 
 static const struct wl_buffer_listener _st_buffer_listener = {
@@ -25,6 +25,7 @@ _platform_buffer_create(struct pilot_buffer *buffer, int fd)
 	thiz->buffer = wl_shm_pool_create_buffer(pool, 0,
 								buffer->surface->width, buffer->surface->height,
 								buffer->surface->stride, buffer->surface->format);
+		LOG_DEBUG("");
 	wl_buffer_add_listener(thiz->buffer, &_st_buffer_listener, buffer);
 
 	wl_shm_pool_destroy(pool);

@@ -5,24 +5,24 @@
 #include <pilot_utk.h>
 
 static int
-_pilot_memory_fill(struct pilot_memory *thiz, pilot_color_t color);
+_pilot_blit_fill(struct pilot_blit *thiz, pilot_color_t color);
 static int
-_pilot_memory_copy(struct pilot_memory *thiz, struct pilot_memory *src);
+_pilot_blit_copy(struct pilot_blit *thiz, struct pilot_blit *src);
 
-struct pilot_memory *
-pilot_memory_create(void *data, pilot_rect_t rect)
+struct pilot_blit *
+pilot_blit_create(void *data, pilot_rect_t rect)
 {
-	PILOT_CREATE_THIZ(pilot_memory);
+	PILOT_CREATE_THIZ(pilot_blit);
 	thiz->data = data;
 	memcpy(&thiz->rect, &rect, sizeof(thiz->rect));
-	thiz->action.fill =_pilot_memory_fill;
-	thiz->action.copy =_pilot_memory_copy;
+	thiz->action.fill =_pilot_blit_fill;
+	thiz->action.copy =_pilot_blit_copy;
 	
 	return thiz;
 }
 
 void
-pilot_memory_destroy(struct pilot_memory *thiz)
+pilot_blit_destroy(struct pilot_blit *thiz)
 {
 	if (thiz->action.destroy)
 		thiz->action.destroy(thiz);
@@ -30,7 +30,7 @@ pilot_memory_destroy(struct pilot_memory *thiz)
 }
 
 int
-pilot_memory_fill(struct pilot_memory *thiz, pilot_color_t color)
+pilot_blit_fill(struct pilot_blit *thiz, pilot_color_t color)
 {
 	int ret;
 	if (thiz->action.fill)
@@ -39,7 +39,7 @@ pilot_memory_fill(struct pilot_memory *thiz, pilot_color_t color)
 }
 
 int
-pilot_memory_copy(struct pilot_memory *thiz, struct pilot_memory *src)
+pilot_blit_copy(struct pilot_blit *thiz, struct pilot_blit *src)
 {
 	int ret;
 	if (thiz->action.copy)
@@ -60,16 +60,16 @@ inline int memset16(void *s, uint16_t ll, uint32_t l)
 MEMSET(s, ll, l)
 
 static int
-_pilot_memory_fill(struct pilot_memory *thiz, pilot_color_t color)
+_pilot_blit_fill(struct pilot_blit *thiz, pilot_color_t color)
 {
 	unsigned int size;
-	size = thiz->rect.w * thiz->rect.h * sizeof(color);
+	size = thiz->rect.w * thiz->rect.h;
 	memset32(thiz->data, color, size);
 	return 0;
 }
 
 static int
-_pilot_memory_copy(struct pilot_memory *thiz, struct pilot_memory *src)
+_pilot_blit_copy(struct pilot_blit *thiz, struct pilot_blit *src)
 {
 	pilot_color_t *color = (pilot_color_t *)thiz->data;
 	void *line = thiz->data + (src->rect.x * sizeof(*color));

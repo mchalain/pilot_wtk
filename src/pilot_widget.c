@@ -5,6 +5,13 @@
 #include <pilot_wtk.h>
 #include <pilot_atk.h>
 
+#include "pilot_wtk_internal.h"
+
+static int
+_pilot_widget_appendchild(struct pilot_widget *thiz, struct pilot_widget *child);
+static struct pilot_window *
+_pilot_widget_window(struct pilot_widget *thiz);
+
 struct pilot_widget *
 pilot_widget_create(struct pilot_widget *parent, struct pilot_rect rect)
 {
@@ -12,11 +19,17 @@ pilot_widget_create(struct pilot_widget *parent, struct pilot_rect rect)
 
 	thiz->type = EWidgetCommon;
 	thiz->parent = parent;
-	pilot_list_append(parent->childs, thiz);
+	if (parent->type != EWidgetWindow)
+		_pilot_widget_appendchild(parent, thiz);
+	else
+	{
+		struct pilot_window *window = (struct pilot_window *)parent;
+		window->layout = thiz;
+		memcpy(&thiz->drawingrect, &parent->drawingrect, sizeof(thiz->drawingrect));
+	}
 
 	return thiz;
 }
-
 
 static int
 _pilot_widget_destroy_child(struct pilot_widget *thiz, struct pilot_widget *child)
@@ -36,16 +49,38 @@ pilot_widget_destroy(struct pilot_widget *thiz)
 }
 
 static int
-_pilot_widget_redraw_child(struct pilot_widget *thiz, struct pilot_widget *child)
+_pilot_widget_redraw_child(struct pilot_widget *thiz, struct pilot_widget *child, struct pilot_blit *blit)
 {
-	return pilot_widget_redraw(child);
+	return pilot_widget_redraw(child, blit);
 }
 
 int
-pilot_widget_redraw(struct pilot_widget *thiz)
+pilot_widget_redraw(struct pilot_widget *thiz, struct pilot_blit *blit)
 {
+	int ret = 0;
+	struct pilot_window *window = _pilot_widget_window(thiz);
 	if (thiz->action.redraw)
-		thiz->action.redraw(thiz);
-	pilot_list_foreach(thiz->childs, _pilot_widget_redraw_child, thiz);
+		ret = thiz->action.redraw(thiz, blit);
+	if (ret)
+		window->force_redraw = 1;
+	pilot_list_foreach(thiz->childs, _pilot_widget_redraw_child, thiz, blit);
+	return ret;
+}
+
+static int
+_pilot_widget_appendchild(struct pilot_widget *thiz, struct pilot_widget *child)
+{
+	pilot_list_append(thiz->childs, child);
+	// we have change the code, because each child overlap the previous one.
+	// some widgets can manage the placement of the childs and calls another function.
+	memcpy(&child->drawingrect, &thiz->drawingrect, sizeof(child->drawingrect));
 	return 0;
+}
+
+static struct pilot_window *
+_pilot_widget_window(struct pilot_widget *thiz)
+{
+	struct pilot_widget *parent = thiz;
+	while(parent->type != EWidgetWindow) parent = parent->parent;
+	return (struct pilot_window *)parent;
 }

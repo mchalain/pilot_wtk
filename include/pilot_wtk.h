@@ -15,6 +15,7 @@ struct pilot_connector;
 struct pilot_window;
 struct pilot_surface;
 struct pilot_widget;
+struct pilot_blit;
 
 typedef enum
 {
@@ -43,8 +44,7 @@ typedef enum
 struct pilot_window {
 	struct pilot_display *display;
 	pilot_widget_type_t type;
-	pilot_length_t width;
-	pilot_length_t height;
+	struct pilot_rect drawingrect;
 	struct {
 		void (*destroy)(struct pilot_window *thiz);
 		int (*show)(struct pilot_window *thiz);
@@ -53,9 +53,9 @@ struct pilot_window {
 	} action;
 	struct pilot_widget *layout;
 	struct pilot_surface *surface;
-	struct pilot_rect drawingrect;
 	pilot_bitsfield_t fullscreen:1;
 	pilot_bitsfield_t opaque:1;
+	pilot_bool_t force_redraw :1;
 	char *name;
 	void *platform;
 };
@@ -63,12 +63,11 @@ struct pilot_window {
 struct pilot_widget {
 	struct pilot_widget *parent;
 	pilot_widget_type_t type;
-	pilot_length_t width;
-	pilot_length_t height;
+	struct pilot_rect drawingrect;
 	struct {
 		void (*destroy)(struct pilot_widget *thiz);
 		int (*show)(struct pilot_widget *thiz);
-		int (*redraw)(struct pilot_widget *thiz);
+		int (*redraw)(struct pilot_widget *thiz, struct pilot_blit *blit);
 		int (*resize)(struct pilot_widget *thiz, pilot_length_t width, pilot_length_t height);
 	} action;
 	_pilot_list(pilot_widget, childs);
@@ -103,5 +102,11 @@ struct pilot_widget *
 pilot_widget_create(struct pilot_widget *parent, struct pilot_rect rect);
 void
 pilot_widget_destroy(struct pilot_widget *thiz);
+
+typedef int(*f_draw_handler)(void *draw_data, struct pilot_blit *blit);
+struct pilot_widget *
+pilot_canvas_create(struct pilot_widget *parent);
+int
+pilot_canvas_set_draw_handler(struct pilot_widget *thiz, f_draw_handler handler, void *data);
 
 #endif

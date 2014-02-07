@@ -15,7 +15,7 @@ _seat_handle_capabilities(void *data, struct wl_seat *seat,
 	} else if (!(caps & WL_SEAT_CAPABILITY_POINTER)) {
 		struct pilot_input * input = NULL;
 		//pilot_input_destroy(input);
-		pilot_emit(display, inputChanged, input);
+		//pilot_emit(display, inputChanged, input);
 	}
 #endif
 #ifdef HAVE_KEYBOARD
@@ -26,7 +26,7 @@ _seat_handle_capabilities(void *data, struct wl_seat *seat,
 	} else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
 		struct pilot_input * input = NULL;
 		//pilot_input_destroy(input);
-		pilot_emit(display, inputChanged, input);
+		//pilot_emit(display, inputChanged, input);
 	}
 #endif
 }
