@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <pilot_wtk.h>
 #include <pilot_utk.h>
+#include <pilot_wtk.h>
 #include <pilot_atk.h>
 
 #include "pilot_wtk_internal.h"
@@ -93,7 +93,8 @@ pilot_window_redraw(struct pilot_window *thiz)
 				.x = 0, .y = 0,
 				.w = thiz->surface->width,
 				.h = thiz->surface->height, };
-			struct pilot_blit * video = pilot_blit_create(image, rect);
+			struct pilot_blit * video = pilot_blit_create(image, rect, 
+										pilot_display_format(thiz->display));
 			ret = pilot_blit_fill(video, color);
 			if (thiz->layout)
 				ret = pilot_widget_redraw(thiz->layout, video);

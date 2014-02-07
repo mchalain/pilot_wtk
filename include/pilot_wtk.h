@@ -1,7 +1,6 @@
 #ifndef __PILOT_WTK_H__
 #define __PILOT_WTK_H__
 
-#include <stdint.h>
 #include <pilot_types.h>
 #include <pilot_log.h>
 #include <pilot_signal.h>
@@ -16,12 +15,6 @@ struct pilot_window;
 struct pilot_surface;
 struct pilot_widget;
 struct pilot_blit;
-
-typedef enum
-{
-	PILOT_DISPLAY_ARGB8888,
-	PILOT_DISPLAY_XRGB8888
-} pilot_pixel_format_t;
 
 struct pilot_display {
 	struct pilot_connector *connector;

@@ -1,6 +1,7 @@
 #ifndef __PILOT_TYPES_H__
 #define __PILOT_TYPES_H__
 
+#include <stdint.h>
 typedef int32_t pilot_coord_t;
 typedef uint32_t pilot_length_t;
 typedef uint32_t pilot_bitsfield_t;
@@ -50,4 +51,10 @@ struct pilot_rect
 };
 typedef struct pilot_rect pilot_rect_t;
 #define pilot_rect_copy(dest, src) do { memcpy(dest, src, sizeof(struct pilot_rect)); } while(0)
+
+typedef enum
+{
+	PILOT_DISPLAY_ARGB8888,
+	PILOT_DISPLAY_XRGB8888
+} pilot_pixel_format_t;
 #endif

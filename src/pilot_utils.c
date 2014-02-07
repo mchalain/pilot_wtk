@@ -10,10 +10,11 @@ static int
 _pilot_blit_copy(struct pilot_blit *thiz, struct pilot_blit *src);
 
 struct pilot_blit *
-pilot_blit_create(void *data, pilot_rect_t rect)
+pilot_blit_create(void *data, pilot_rect_t rect, pilot_pixel_format_t format)
 {
 	PILOT_CREATE_THIZ(pilot_blit);
 	thiz->data = data;
+	thiz->format = format;
 	memcpy(&thiz->rect, &rect, sizeof(thiz->rect));
 	thiz->action.fill =_pilot_blit_fill;
 	thiz->action.copy =_pilot_blit_copy;
