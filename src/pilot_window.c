@@ -112,3 +112,23 @@ _pilot_window_resize(void *widget, uint32_t width, uint32_t height)
 	int ret = 0;
 	return ret;
 }
+
+int
+pilot_window_setfocus(struct pilot_window *thiz, struct pilot_widget *widget)
+{
+	int ret = -1;
+	if(widget == NULL)
+	{
+		thiz->focus = pilot_widget_getfocus(thiz->layout);
+		ret = 0;
+	}
+	else
+	{
+		struct pilot_widget *child = thiz->layout;
+		// search widget inside the layout's childs
+		thiz->focus = widget;
+		ret = 0;
+	}
+	return ret;
+}
+

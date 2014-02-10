@@ -115,4 +115,18 @@ _pilot_display_synch(struct pilot_display *thiz)
 	return 0;
 }
 
+static int
+_pilot_display_setinputfocus(struct pilot_display *thiz, struct pilot_input *input, struct pilot_window *window)
+{
+	return pilot_input_focus(input, window);
+}
+int
+pilot_display_focus(struct pilot_display *thiz, struct pilot_window *window)
+{
+	struct pilot_window *search = pilot_list_first(thiz->windows);
+	while (search != window)
+		search = pilot_list_next(thiz->windows);
+	pilot_list_foreach(thiz->inputs, _pilot_display_setinputfocus, thiz, search);
+	return 0;
+}
 #include "platform_display.c"

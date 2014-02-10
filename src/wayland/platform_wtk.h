@@ -23,9 +23,22 @@ struct platform_buffer {
 	struct wl_buffer *buffer;
 };
 
+struct platform_input {
+	struct wl_keyboard *keyboard;
+	struct wl_pointer *pointer;
+	struct wl_touch *touch;
+	pilot_coord_t x, y;
+};
+
 inline struct  platform_display *
 _platform_display(struct  pilot_display *display);
 inline struct  platform_surface *
 _platform_surface(struct  pilot_surface *surface);
+
+struct pilot_window *
+_platform_display_search_window(struct pilot_display *display, struct wl_surface *surface);
+
+void
+_platform_display_inputmanager(struct pilot_display *display, struct wl_registry *registry, uint32_t id);
 
 #endif

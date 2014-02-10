@@ -33,6 +33,7 @@ pilot_canvas_create(struct pilot_widget *parent)
 	thiz = pilot_widget_create(parent, parent->drawingrect);
 	thiz->action.redraw = _pilot_canvas_redraw;
 	thiz->action.destroy = _pilot_canvas_destroy;
+	thiz->focussable = 1;
 
 	return thiz;
 }

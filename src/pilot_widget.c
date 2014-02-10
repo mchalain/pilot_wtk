@@ -84,3 +84,36 @@ _pilot_widget_window(struct pilot_widget *thiz)
 	while(parent->type != EWidgetWindow) parent = parent->parent;
 	return (struct pilot_window *)parent;
 }
+
+static int
+_pilot_widget_focussable(struct pilot_widget *thiz, struct pilot_widget *child, struct pilot_widget **out)
+{
+	struct pilot_widget *focus = NULL;
+	focus = pilot_widget_getfocus(child);
+	if (focus != NULL)
+	{
+		*out = focus;
+		return -1;
+	}
+	return 0;
+}
+
+struct pilot_widget *
+pilot_widget_getfocus(struct pilot_widget *thiz)
+{
+	struct pilot_widget *focus = NULL;
+	if (thiz->focussable)
+		focus = thiz;
+	else
+	{
+		pilot_list_foreach(thiz->childs, _pilot_widget_focussable, thiz, &focus);
+	}
+	return focus;
+}
+
+struct pilot_widget *
+pilot_widget_getchildat(struct pilot_widget *thiz, pilot_coord_t x, pilot_coord_t y)
+{
+	//TODO
+	return thiz;
+}

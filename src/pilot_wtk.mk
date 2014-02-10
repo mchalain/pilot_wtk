@@ -6,6 +6,7 @@ pilot_wtk_SOURCES=pilot_display.c \
 	pilot_surface.c \
 	pilot_buffer.c \
 	pilot_buffershm.c \
+	pilot_input.c \
 	../weston_shared/os-compatibility.c
 
 pilot_wtk-objs=$(pilot_wtk_SOURCES:%.c=%.o)

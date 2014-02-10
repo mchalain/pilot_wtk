@@ -1,41 +1,6 @@
 #include "platform_wtk.h"
 
 static void
-_seat_handle_capabilities(void *data, struct wl_seat *seat,
-			 enum wl_seat_capability caps)
-{
-	struct pilot_display *display = data;
-	struct platform_display *platform = display->platform;
-
-#ifdef HAVE_POINTER
-	if ((caps & WL_SEAT_CAPABILITY_POINTER)) {
-		platform->seat = seat;
-		struct pilot_input * input = pilot_input_create(display,PILOT_INPUT_POINTER);
-		pilot_display_add_input(display, input);
-	} else if (!(caps & WL_SEAT_CAPABILITY_POINTER)) {
-		struct pilot_input * input = NULL;
-		//pilot_input_destroy(input);
-		//pilot_emit(display, inputChanged, input);
-	}
-#endif
-#ifdef HAVE_KEYBOARD
-	if ((caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
-		platform->seat = seat;
-		struct pilot_input * input = pilot_input_create(display,PILOT_INPUT_KEYBOARD);
-		pilot_display_add_input(display, input);
-	} else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD)) {
-		struct pilot_input * input = NULL;
-		//pilot_input_destroy(input);
-		//pilot_emit(display, inputChanged, input);
-	}
-#endif
-}
-
-static const struct wl_seat_listener _st_seat_listener = {
-	_seat_handle_capabilities,
-};
-
-static void
 _shm_format(void *data, struct wl_shm *wl_shm, uint32_t format)
 {
 	struct pilot_display *d = data;
@@ -61,9 +26,7 @@ _registry_handle_global(void *data, struct wl_registry *registry,
 		platform->shell = wl_registry_bind(registry,
 					    id, &wl_shell_interface, 1);
 	} else if (strcmp(interface, "wl_seat") == 0) {
-		platform->seat = wl_registry_bind(registry,
-					    id, &wl_seat_interface, 1);
-		wl_seat_add_listener(platform->seat, &_st_seat_listener, d);
+		_platform_display_inputmanager(d, registry, id);
 	} else if (strcmp(interface, "wl_shm") == 0) {
 		platform->shm = wl_registry_bind(registry,
 					  id, &wl_shm_interface, 1);
@@ -160,5 +123,26 @@ inline struct  platform_display *
 _platform_display(struct  pilot_display *display)
 {
 	return display->platform;
+}
+
+static int
+_platform_window_search(struct pilot_window **out, struct pilot_window *window, struct wl_surface *search)
+{
+	struct platform_surface *platform = window->surface->platform;
+	if (platform->surface == search)
+	{
+		*out = window;
+		return -1;
+	}
+	return 0;
+}
+
+struct pilot_window *
+_platform_display_search_window(struct pilot_display *display, struct wl_surface *surface)
+{
+	struct pilot_window *result;
+	pilot_list_foreach(display->windows, _platform_window_search, &result, surface);
+	
+	return result;
 }
 

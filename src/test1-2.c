@@ -14,6 +14,7 @@ struct mycanvas_data
 	struct pilot_widget *canvas;
 	struct pilot_window *window;
 	int change;
+	int incr;
 } canvas_data;
 
 static void
@@ -66,12 +67,23 @@ int canvas_draw(void *draw_data, struct pilot_blit *blit)
 {
 	struct mycanvas_data *data = draw_data;
 	uint32_t w, h;
-	int change = data->change;
 	LOG_DEBUG("");
-	data->change += 16;
+	data->change += data->incr;
 	paint_pixels(blit->data, 20, blit->rect.w, blit->rect.h, data->change);
 	// we return 0 to not force the redraw at the next frame return
 	// thread_run does the redraw instead
+	return 0;
+}
+
+int
+canvas_key(void *draw_data, pilot_bitsfield_t key, char state)
+{
+	struct mycanvas_data *data = draw_data;
+	if (key == 0x67)
+		data->incr ++;
+	else if (key == 0x6C)
+		data->incr --;
+	fprintf(stdout, "%X\n", key);
 	return 0;
 }
 
@@ -86,7 +98,9 @@ mainwindow_init(struct pilot_window *mainwindow)
 	canvas_data.canvas = canvas;
 	canvas_data.window = mainwindow;
 	canvas_data.change = 0;
+	canvas_data.incr = 16;
 
+	pilot_connect(canvas, keyChanged, &canvas_data, canvas_key);
 	pilot_canvas_set_draw_handler(canvas, canvas_draw, &canvas_data);
 	return 0;
 }

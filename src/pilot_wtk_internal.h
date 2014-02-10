@@ -38,6 +38,15 @@ struct pilot_buffer {
 	void *platform;
 };
 
+
+struct pilot_input
+{
+	pilot_key_t id;
+	struct pilot_display *display;
+	struct pilot_window *window;
+	void *platform;
+};
+
 int
 pilot_window_redraw(struct pilot_window *thiz);
 
@@ -72,4 +81,19 @@ void
 pilot_buffer_destroy(struct pilot_buffer *thiz);
 void
 pilot_buffer_busy(struct pilot_buffer *thiz, int busy);
+
+/**
+ * pilot_input
+ * **/
+struct pilot_input *
+pilot_input_create(struct pilot_display *display);
+struct pilot_input *
+pilot_inputkeyboard_create(struct pilot_display *display);
+struct pilot_input *
+pilot_inputmouse_create(struct pilot_display *display);
+void
+pilot_input_destroy(struct pilot_input *thiz);
+int
+pilot_input_focus(struct pilot_input *thiz, struct pilot_window *window);
+
 #endif
