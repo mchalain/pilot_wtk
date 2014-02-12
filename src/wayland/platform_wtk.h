@@ -21,6 +21,7 @@ struct platform_surface {
 
 struct platform_buffer {
 	struct wl_buffer *buffer;
+	int fd;
 };
 
 struct platform_input {

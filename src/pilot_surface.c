@@ -31,8 +31,8 @@ pilot_surface_create(struct pilot_display *display,
 	thiz->size =  thiz->height * thiz->stride;
 	thiz->platform = _platform_surface_create(thiz, display);
 	thiz->offscreenbufferid = 0;
-	thiz->buffers[0] = pilot_buffershm_create(thiz, thiz->size);
-	thiz->buffers[1] = pilot_buffershm_create(thiz, thiz->size);
+	thiz->buffers[0] = pilot_buffer_create(thiz, thiz->size);
+	thiz->buffers[1] = pilot_buffer_create(thiz, thiz->size);
 	mutex_init(thiz->lock, NULL);
 	cond_init(thiz->cond, NULL);
 	thiz->ready = 1;

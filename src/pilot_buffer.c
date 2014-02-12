@@ -11,6 +11,13 @@
 void
 _pilot_buffer_destroy(struct pilot_buffer *thiz);
 
+static void *
+_platform_buffer_create(struct pilot_buffer *buffer, struct pilot_surface *surface);
+static void
+_platform_buffer_destroy(struct pilot_buffer *buffer);
+static int
+_platform_buffer_paint(struct pilot_buffer *buffer);
+
 struct pilot_buffer *
 pilot_buffer_create(struct pilot_surface *surface,
 				int size)
@@ -22,7 +29,17 @@ pilot_buffer_create(struct pilot_surface *surface,
 
 	thiz->surface = surface;
 	thiz->size = size;
+	thiz->action.paint = _platform_buffer_paint;
 	thiz->action.destroy = _pilot_buffer_destroy;
+
+	thiz->platform = _platform_buffer_create(thiz, surface);
+	if (!thiz)
+	{
+		mutex_destroy(thiz->lock);
+		cond_destroy(thiz->cond);
+		free(thiz);
+		thiz = NULL;
+	}
 	return thiz;
 }
 
@@ -31,6 +48,7 @@ _pilot_buffer_destroy(struct pilot_buffer *thiz)
 {
 	mutex_destroy(thiz->lock);
 	cond_destroy(thiz->cond);
+	_platform_buffer_destroy(thiz);
 	free(thiz);
 }
 
@@ -100,3 +118,5 @@ pilot_buffer_unlock(struct pilot_buffer *thiz)
 	mutex_unlock(thiz->lock);
 	return 0;
 }
+
+#include "platform_buffer.c"

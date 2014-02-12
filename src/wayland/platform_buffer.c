@@ -12,15 +12,32 @@ static const struct wl_buffer_listener _st_buffer_listener = {
 };
 
 static void *
-_platform_buffer_create(struct pilot_buffer *buffer, int fd)
+_platform_buffer_create(struct pilot_buffer *buffer, struct pilot_surface *surface)
 {
 	struct wl_shm_pool *pool;
 	struct platform_display *display = NULL;
 	PILOT_CREATE_THIZ(platform_buffer);
 
+	thiz->fd = os_create_anonymous_file(buffer->size);
+	if (thiz->fd < 0) {
+		LOG_ERROR("creating a buffer file for %llu B failed: %m\n",
+			buffer->size);
+		return NULL;
+	}
+
+	buffer->data = mmap(NULL, buffer->size, PROT_READ | PROT_WRITE, MAP_SHARED, thiz->fd, 0);
+	if (buffer->data == MAP_FAILED) {
+		LOG_ERROR("mmap failed: %m\n");
+		close(thiz->fd);
+		free(thiz);
+		return NULL;
+	}
+	// paint the padding
+	memset(buffer->data, 0xff, buffer->size);
+
 	display = _platform_display(buffer->surface->display);
 
-	pool = wl_shm_create_pool(display->shm, fd, buffer->size);
+	pool = wl_shm_create_pool(display->shm, thiz->fd, buffer->size);
 	
 	thiz->buffer = wl_shm_pool_create_buffer(pool, 0,
 								buffer->surface->width, buffer->surface->height,
@@ -38,6 +55,7 @@ static void
 _platform_buffer_destroy(struct pilot_buffer *buffer)
 {
 	struct platform_buffer *platform = buffer->platform;
+	close(platform->fd);
 	wl_buffer_destroy(platform->buffer);
 	free(platform);
 }
