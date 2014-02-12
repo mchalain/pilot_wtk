@@ -27,6 +27,7 @@ struct pilot_buffer {
 	pilot_rect_t region;
 	unsigned long long size;
 	void *data;
+	pilot_bool_t id:2;
 	pilot_bool_t ready:1;
 	pilot_bool_t busy:1;
 	_pilot_mutex(lock);
@@ -73,10 +74,7 @@ pilot_surface_flip(struct pilot_surface *thiz);
  * **/
 struct pilot_buffer *
 pilot_buffer_create(struct pilot_surface *surface,
-				int size);
-struct pilot_buffer *
-pilot_buffershm_create(struct pilot_surface *surface,
-				int size);
+				int size, int id);
 void
 pilot_buffer_destroy(struct pilot_buffer *thiz);
 void

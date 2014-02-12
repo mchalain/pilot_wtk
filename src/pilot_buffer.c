@@ -12,7 +12,7 @@ void
 _pilot_buffer_destroy(struct pilot_buffer *thiz);
 
 static void *
-_platform_buffer_create(struct pilot_buffer *buffer, struct pilot_surface *surface);
+_platform_buffer_create(struct pilot_buffer *buffer);
 static void
 _platform_buffer_destroy(struct pilot_buffer *buffer);
 static int
@@ -20,7 +20,7 @@ _platform_buffer_paint(struct pilot_buffer *buffer);
 
 struct pilot_buffer *
 pilot_buffer_create(struct pilot_surface *surface,
-				int size)
+				int size, int id)
 {
 	PILOT_CREATE_THIZ(pilot_buffer);
 
@@ -29,10 +29,11 @@ pilot_buffer_create(struct pilot_surface *surface,
 
 	thiz->surface = surface;
 	thiz->size = size;
+	thiz->id = id;
 	thiz->action.paint = _platform_buffer_paint;
 	thiz->action.destroy = _pilot_buffer_destroy;
 
-	thiz->platform = _platform_buffer_create(thiz, surface);
+	thiz->platform = _platform_buffer_create(thiz);
 	if (!thiz)
 	{
 		mutex_destroy(thiz->lock);

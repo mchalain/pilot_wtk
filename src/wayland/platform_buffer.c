@@ -12,7 +12,7 @@ static const struct wl_buffer_listener _st_buffer_listener = {
 };
 
 static void *
-_platform_buffer_create(struct pilot_buffer *buffer, struct pilot_surface *surface)
+_platform_buffer_create(struct pilot_buffer *buffer)
 {
 	struct wl_shm_pool *pool;
 	struct platform_display *display = NULL;
