@@ -17,6 +17,12 @@
 
 typedef void pilot_object_t;
 
+struct pilot_option
+{
+	const char *name;
+	const char *value;
+};
+
 struct pilot_connector
 {
 	struct pilot_application *application;
@@ -37,6 +43,7 @@ pilot_connector_wait(struct pilot_connector *thiz);
 struct pilot_application
 {
 	_pilot_list(pilot_connector, connectors);
+	_pilot_list(pilot_option, options);
 	fd_set rfds;
 	int maxfd;
 	int signal_pipe[2];
@@ -45,7 +52,7 @@ struct pilot_application
 };
 
 struct pilot_application *
-pilot_application_create(int argc, char **argv);
+pilot_application_create(int argc, const char **argv);
 void
 pilot_application_destroy(struct pilot_application *application);
 int
@@ -62,6 +69,10 @@ int
 pilot_application_run(struct pilot_application *application);
 int
 pilot_application_exit(struct pilot_application *application, int ret);
+const char *
+pilot_application_getopt_string(struct pilot_application *application, char *name);
+int
+pilot_application_getopt_int(struct pilot_application *application, char *name);
 
 struct pilot_timer
 {

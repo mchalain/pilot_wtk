@@ -9,6 +9,9 @@
 
 #define MAX(a,b)	((a) > (b))? (a): (b)
 
+static int
+_pilot_application_storeopt(struct pilot_application *application, const char *arg);
+
 struct pilot_connector *
 pilot_connector_create(struct pilot_application *application)
 {
@@ -67,12 +70,18 @@ static int
 _platform_application_dispatch_events(struct pilot_application *application);
 
 struct pilot_application *
-pilot_application_create(int argc, char **argv)
+pilot_application_create(int argc, const char **argv)
 {
 	struct pilot_application *application;
 	application = malloc(sizeof(*application));
 	memset(application, 0, sizeof(*application));
 
+	int i;
+	for (i = 1; i < argc; i++)
+	{
+		if (_pilot_application_storeopt(application, argv[i]))
+			break;
+	}
 /*
 	pipe(application->signal_pipe);
 	struct pilot_connector *connector = pilot_connector_create(application);
@@ -217,4 +226,53 @@ pilot_application_exit(struct pilot_application *application, int ret)
 {
 	application->running = 0;
 	return ret;
+}
+
+static int
+_pilot_application_storeopt(struct pilot_application *application, const char *arg)
+{
+	if (!strncmp("--",arg,2))
+	{
+		
+		struct pilot_option *entry = malloc(sizeof(*entry));
+		memset(entry, 0, sizeof(*entry));
+		entry->name = arg + 2;
+		entry->value = index(arg, '=');
+		pilot_list_append(application->options, entry);
+	}
+	return 0;
+}
+
+const char *
+pilot_application_getopt_string(struct pilot_application *application, char *name)
+{
+	struct pilot_option *option;
+	const char *value = NULL;
+	int len = strlen(name);
+
+	option = pilot_list_first(application->options);
+	while (option && strncmp(name, option->name, len))
+	{
+		option = pilot_list_next(application->options);
+	}
+	if (option)
+		value = option->value;
+	return value;
+}
+
+int
+pilot_application_getopt_int(struct pilot_application *application, char *name)
+{
+	struct pilot_option *option;
+	int value = 0;
+	int len = strlen(name);
+
+	option = pilot_list_first(application->options);
+	while (option && strncmp(name, option->name, len))
+	{
+		option = pilot_list_next(application->options);
+	}
+	if (option && option->value)
+		value = atoi(option->value);
+	return value;
 }
