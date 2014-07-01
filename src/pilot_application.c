@@ -237,7 +237,7 @@ _pilot_application_storeopt(struct pilot_application *application, const char *a
 		struct pilot_option *entry = malloc(sizeof(*entry));
 		memset(entry, 0, sizeof(*entry));
 		entry->name = arg + 2;
-		entry->value = index(arg, '=');
+		entry->value = index(arg, '=') + 1;
 		pilot_list_append(application->options, entry);
 	}
 	return 0;
