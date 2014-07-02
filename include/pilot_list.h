@@ -11,6 +11,15 @@
 			memset(it, 0, sizeof(typeof (list))); \
 			it->item = entry; \
 		} while(0)
+#define pilot_list_insert(list, entry, index) do { typeof (list) *it = &list; \
+			int i; \
+			for (i = 0; i < index && it->next; i++) it = it->next; \
+			typeof (list) *new = malloc(sizeof(typeof (list))); \
+			memset(new, 0, sizeof(typeof (list))); \
+			new->item = entry; \
+			new->next = it->next; \
+			it->next = new; \
+		} while(0)
 #define pilot_list_remove(list, entry) do { typeof (list) *it = &list; \
 			while (it->next && it->next->item != entry) it = it->next; \
 			if (it->next) { \
